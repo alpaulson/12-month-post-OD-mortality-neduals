@@ -1,0 +1,2115 @@
+---
+title: "All OD Data"
+author: "Allison Paulson"
+date: "12/18/2021"
+output: html_document
+---
+
+# SETUP
+
+```{r SETUP}
+
+library(dplyr)
+library(data.table)
+library(pacman)
+library(lubridate)
+library(zoo)
+
+`%notin%` <- Negate(`%in%`)
+
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+# OPEN FILES
+
+```{r OPEN FILES-all years}
+
+# MedPAR (Inpatient )
+
+medpar2011_all <- fread("data/2011/under65/medpar_under65.csv")
+medpar2012_all <- fread("data/2012/under65/medpar_under65.csv")
+medpar2013_all <- fread("data/2013/under65/medpar_under65.csv")
+medpar2014_all <- fread("data/2014/under65/medpar_under65.csv")
+medpar2015_all <- fread("data/2015/under65/medpar_under65.csv")
+medpar2016_all <- fread("data/2016/under65/medpar_under65.csv")
+medpar2017_all <- fread("data/2017/under65/medpar_under65.csv")
+
+# Outpatient
+
+outpatient2011_all <- fread("data/2011/under65/outpatient_under65.csv")
+outpatient2012_all <- fread("data/2012/under65/outpatient_under65.csv")
+outpatient2013_all <- fread("data/2013/under65/outpatient_under65.csv")
+outpatient2014_all <- fread("data/2014/under65/outpatient_under65.csv")
+outpatient2015_all <- fread("data/2015/under65/outpatient_under65.csv")
+outpatient2016_all <- fread("data/2016/under65/outpatient_under65.csv")
+outpatient2017_all <- fread("data/2017/under65/outpatient_under65.csv")
+
+# MBSF Summary file 
+
+mbsf_base2013 <- fread("data/2013/under65/mbsf_under65.csv")
+mbsf_base2014 <- fread("data/2014/under65/mbsf_under65.csv")
+mbsf_base2015 <- fread("data/2015/under65/mbsf_under65.csv")
+mbsf_base2016 <- fread("data/2016/under65/mbsf_under65.csv")
+mbsf_base2017 <- fread("data/2017/under65/mbsf_under65.csv")
+
+# MBSF supplements 
+
+mbsf_cc_summary2014 <- fread("data/2014/under65/cc_under65.csv")
+mbsf_oth_cc_summary2014 <- fread("data/2014/under65/othcc_under65.csv")
+cca2014 <- merge(mbsf_base2014, mbsf_cc_summary2014, all.x = TRUE, all.y = FALSE)
+ccb2014 <- merge(cca2014, mbsf_oth_cc_summary2014, all.x = TRUE, all.y = FALSE)
+mbsf2014_full <- ccb2014
+
+rm(mbsf_cc_summary2014,mbsf_oth_cc_summary2014,cca2014,ccb2014) 
+
+mbsf_cc_summary2015 <- fread("data/2015/under65/cc_under65.csv")
+mbsf_oth_cc_summary2015 <- fread("data/2015/under65/othcc_under65.csv")
+cca2015 <- merge(mbsf_base2015, mbsf_cc_summary2015, all.x = TRUE, all.y = FALSE)
+ccb2015 <- merge(cca2015, mbsf_oth_cc_summary2015, all.x = TRUE, all.y = FALSE)
+mbsf2015_full <- ccb2015
+
+rm(mbsf_cc_summary2015,mbsf_oth_cc_summary2015,cca2015,ccb2015) 
+
+mbsf_cc_summary2016 <- fread("data/2016/under65/cc_under65.csv")
+mbsf_oth_cc_summary2016 <- fread("data/2016/under65/othcc_under65.csv")
+cca2016 <- merge(mbsf_base2016, mbsf_cc_summary2016, all.x = TRUE, all.y = FALSE)
+ccb2016 <- merge(cca2016, mbsf_oth_cc_summary2016, all.x = TRUE, all.y = FALSE)
+mbsf2016_full <- ccb2016
+
+rm(mbsf_cc_summary2016,mbsf_oth_cc_summary2016,cca2016,ccb2016) 
+
+```
+
+# IDENTIFY ODS
+
+ICD-9 codes 2011-2015; ICD-10 codes 2015-2017 (CMS changed October 1, 2015)
+
+```{r IDENTIFY ODs}
+
+ODs_icd9 <- c('96500','96501','96502','96509','E8500', 'E8501','E8502','E9350','E9351','E9352')
+ODs_icd10 <- "T400|T401|T402|T403|T404|T406"
+
+# 2011 ####
+
+####### Medpar #
+
+medparOD2011_all <- medpar2011_all %>%
+  filter_at(vars(DGNS_1_CD:DGNS_2_CD), any_vars(. %in% ODs_icd9))
+
+n_distinct(medparOD2011_all$BENE_ID) 
+
+paste0("There were ",n_distinct(medparOD2011_all$BENE_ID)," inpatient ODs in 2011.")
+
+####### Outpatient #
+
+outpatientOD2011_all <- outpatient2011_all %>% filter_at(vars(ICD_DGNS_CD1:ICD_DGNS_CD2),
+                                                 any_vars(. %in% ODs_icd9))
+
+paste0("There were ",n_distinct(outpatientOD2011_all$BENE_ID) ," outpatient ODs in 2011.")
+
+# 2012 ####
+
+####### Medpar #
+
+medparOD2012_all <- medpar2012_all %>%
+  filter_at(vars(DGNS_1_CD:DGNS_2_CD), any_vars(. %in% ODs_icd9))
+
+paste0("There were ",n_distinct(medparOD2012_all$BENE_ID)," inpatient ODs in 2012.")
+
+
+####### Outpatient #
+
+outpatientOD2012_all <- outpatient2012_all %>% filter_at(vars(ICD_DGNS_CD1:ICD_DGNS_CD2),
+                                                 any_vars(. %in% ODs_icd9))
+
+paste0("There were ",n_distinct(outpatientOD2012_all$BENE_ID) ," outpatient ODs in 2012.")
+
+# 2013 ####
+
+####### Medpar #
+
+medparOD2013_all <- medpar2013_all %>%
+  filter_at(vars(DGNS_1_CD:DGNS_2_CD), any_vars(. %in% ODs_icd9))
+
+
+paste0("There were ",n_distinct(medparOD2013_all$BENE_ID)," inpatient ODs in 2013.")
+
+
+####### Outpatient #
+
+outpatientOD2013_all <- outpatient2013_all %>% filter_at(vars(ICD_DGNS_CD1:ICD_DGNS_CD2),
+                                                 any_vars(. %in% ODs_icd9))
+
+paste0("There were ",n_distinct(outpatientOD2013_all$BENE_ID)," outpatient ODs in 2013.")
+
+
+# 2014 ####
+
+####### Medpar #
+
+medparOD2014_all <- medpar2014_all %>%
+  filter_at(vars(DGNS_1_CD:DGNS_2_CD), any_vars(. %in% ODs_icd9))
+
+paste0("There were ",n_distinct(medparOD2014_all$BENE_ID)," inpatient ODs in 2014.")
+
+####### Outpatient #
+
+outpatientOD2014_all <- outpatient2014_all %>% filter_at(vars(ICD_DGNS_CD1:ICD_DGNS_CD2),
+                                                 any_vars(. %in% ODs_icd9))
+
+paste0("There were ",n_distinct(outpatientOD2014_all$BENE_ID)," outpatient ODs in 2014.")
+
+# 2015 ####
+
+# Before Oct 1 used ICD-9; after used ICD-10
+
+# The "T" codes have various endings to indicate intention, whether it is the initial encounter, and other information. Using "grep" captures all the possibilities for each of the dx codes. (see: https://icd.codes/icd10cm/T401)
+
+####### Medpar #
+
+which(colnames(medpar2015_all)=="DGNS_1_CD") # column 154
+
+medpar2015_icd10 <- medpar2015_all[,c(154:155)]
+
+medpar2015_icd10 <- unique(unlist(lapply(medpar2015_icd10, grep, pattern=ODs_icd10, value=TRUE)))
+
+medparOD2015_all <- medpar2015_all %>%
+  filter_at(vars(DGNS_1_CD:DGNS_2_CD), any_vars(. %in% c(medpar2015_icd10, ODs_icd9)))
+
+paste0("There were ",n_distinct(medparOD2015_all$BENE_ID)," inpatient ODs in 2015.")
+
+test <- subset(medparOD2015_all, DGNS_E_CD_CNT == 0) # 20% did not have E code
+
+
+####### Outpatient #
+
+which(colnames(outpatient2015_all)=="ICD_DGNS_CD2") # column 43
+
+outpt2015_icd10 <- outpatient2015_all[,c(42:43)]
+
+outpt2015_icd10 <- unique(unlist(lapply(outpt2015_icd10, grep, pattern=ODs_icd10, value=TRUE)))
+
+outpatientOD2015_all <- outpatient2015_all %>%
+  filter_at(vars(ICD_DGNS_CD1:ICD_DGNS_CD2), any_vars(. %in% c(outpt2015_icd10, ODs_icd9)))
+
+paste0("There were ",n_distinct(outpatientOD2015_all$BENE_ID)," outpatient ODs in 2015.")
+
+
+# 2016 ####
+
+####### Medpar #
+
+which(colnames(medpar2016_all)=="DGNS_1_CD") # column 154
+
+medpar2016_icd10 <- medpar2016_all[,c(154:155)]
+
+medpar2016_icd10 <- unique(unlist(lapply(medpar2016_icd10, grep, pattern=ODs_icd10, value=TRUE)))
+
+medparOD2016_all <- medpar2016_all %>%
+  filter_at(vars(DGNS_1_CD:DGNS_2_CD), any_vars(. %in% c(medpar2016_icd10)))
+
+paste0("There were ",n_distinct(medparOD2016_all$BENE_ID)," inpatient ODs in 2016.")
+
+test <- subset(medparOD2016_all, DGNS_E_CD_CNT == 0) # 40% did not have E code
+
+
+####### Outpatient #
+
+outpt2016_icd10 <- outpatient2016_all[,c(42:43)]
+
+outpt2016_icd10 <- unique(unlist(lapply(outpt2016_icd10, grep, pattern=ODs_icd10, value=TRUE)))
+
+outpatientOD2016_all <- outpatient2016_all %>%
+  filter_at(vars(ICD_DGNS_CD1:ICD_DGNS_CD2), any_vars(. %in% c(outpt2016_icd10)))
+
+paste0("There were ",n_distinct(outpatientOD2016_all$BENE_ID)," outpatient ODs in 2016.")
+
+
+# 2017 ####
+
+which(colnames(medpar2017_all)=="DGNS_1_CD") # column 154
+
+medpar2017_icd10 <- medpar2017_all[,c(154:155)]
+
+medpar2017_icd10 <- unique(unlist(lapply(medpar2017_icd10, grep, pattern=ODs_icd10, value=TRUE)))
+
+medparOD2017_all <- medpar2017_all %>%
+  filter_at(vars(DGNS_1_CD:DGNS_2_CD), any_vars(. %in% c(medpar2017_icd10)))
+
+paste0("There were ",n_distinct(medparOD2017_all$BENE_ID)," inpatient ODs in 2017.")
+
+test <- subset(medparOD2017_all, DGNS_E_CD_CNT == 0) # % did not have E code
+
+
+####### Outpatient #
+
+outpt2017_icd10 <- outpatient2017_all[,c(42:43)]
+
+outpt2017_icd10 <- unique(unlist(lapply(outpt2017_icd10, grep, pattern=ODs_icd10, value=TRUE)))
+
+outpatientOD2017_all <- outpatient2017_all %>%
+  filter_at(vars(ICD_DGNS_CD1:ICD_DGNS_CD2), any_vars(. %in% c(outpt2017_icd10)))
+
+paste0("There were ",n_distinct(outpatientOD2017_all$BENE_ID)," outpatient ODs in 2017.")
+
+```
+
+Merge Medpar ODs to one df
+
+```{r Merge each MedPAR OD by yr}
+
+# Remove V1 and columns inconsistent between years (not necessary for analysis)
+
+medparOD2011_all$V1 <- NULL
+medparOD2012_all$V1 <- NULL
+medparOD2013_all$V1 <- NULL
+medparOD2014_all$V1 <- NULL
+medparOD2015_all$V1 <- NULL
+medparOD2016_all$V1 <- NULL
+medparOD2017_all$V1 <- NULL
+
+medparOD2016_all$ACO_ID_NUM <- NULL
+medparOD2017_all$ACO_ID_NUM <- NULL
+
+medparOD2016_all$RC_ALLOGENEIC_STEM_CELL_AMT <- NULL
+medparOD2017_all$RC_ALLOGENEIC_STEM_CELL_AMT <- NULL
+
+medparOD2016_all$ISLET_ADD_ON_PYMT_AMT <- NULL
+medparOD2017_all$ISLET_ADD_ON_PYMT_AMT <- NULL
+
+medparOD2017_all$CLM_IP_INITL_MS_DRG_CD <- NULL
+medparOD2017_all$VAL_CD_Q1_PYMT_RDCTN_AMT <- NULL
+
+medparOD_allODs <- rbind(medparOD2014_all,medparOD2015_all,medparOD2016_all,medparOD2017_all)
+
+paste0("A total of ",n_distinct(medparOD_allODs$BENE_ID)," beneficiaries had inpatient OD records between 2011-2017.")
+
+saveRDS(medparOD_allODs, file = "medparOD_allODs.Rds")
+
+rm(medparOD2011_all,medparOD2012_all,medparOD2013_all,medparOD2014_all,medparOD2015_all,medparOD2016_all,medparOD2017_all) # Remove single year OD files
+
+rm(medpar2011_all,medpar2012_all) 
+
+```
+
+Merge Outpt ODs to one df
+
+```{r Merge each Outpt OD by yr}
+
+# Remove V1 and inconsistent columns (not necessary for analysis)
+
+outpatientOD2011_all$V1 <- NULL
+outpatientOD2012_all$V1 <- NULL
+outpatientOD2013_all$V1 <- NULL
+outpatientOD2014_all$V1 <- NULL
+outpatientOD2015_all$V1 <- NULL
+outpatientOD2016_all$V1 <- NULL
+outpatientOD2017_all$V1 <- NULL
+
+outpatientOD2017_all$CLM_RSDL_PYMT_IND_CD <- NULL
+outpatientOD2017_all$PRVDR_VLDTN_TYPE_CD <- NULL
+outpatientOD2017_all$RR_BRD_EXCLSN_IND_SW <- NULL
+outpatientOD2017_all$CLM_MODEL_REIMBRSMT_AMT <- NULL
+
+outptOD_allODs <- rbind(outpatientOD2011_all, outpatientOD2012_all, outpatientOD2013_all, outpatientOD2014_all,outpatientOD2015_all,outpatientOD2016_all,outpatientOD2017_all)
+
+paste0("A total of ",n_distinct(outptOD_allODs$BENE_ID)," beneficiaries had outpatient OD records between 2011-2017.")
+
+saveRDS(outptOD_allODs, file = "outptOD_allODs.Rds")
+
+rm(outpatientOD2011_all,outpatientOD2012_all,outpatientOD2013_all,outpatientOD2014_all,outpatientOD2015_all,outpatientOD2016_all,outpatientOD2017_all) # Remove single year OD files
+
+rm(outpatient2011_all,outpatient2012_all)
+
+```
+
+# ALL OD DATES
+
+Merge medpar & outpt to one dataframe of all ODs
+
+```{r Merge medpar & outpt all ODs}
+
+# All dates in medpar and outpatient in date format
+
+medparOD_allODs$ADMSN_DT <- as.Date(medparOD_allODs$ADMSN_DT, "%d%b%Y")
+medparOD_allODs$DSCHRG_DT <- as.Date(medparOD_allODs$DSCHRG_DT, "%d%b%Y")
+
+outptOD_allODs$CLM_FROM_DT <- as.Date(outptOD_allODs$CLM_FROM_DT, "%d%b%Y")
+outptOD_allODs$CLM_THRU_DT <- as.Date(outptOD_allODs$CLM_THRU_DT, "%d%b%Y")
+
+# Subset from both files: Bene ID, claim ID, discharge date, discharge destination code 
+
+medparODs_subset <- medparOD_allODs[,c("BENE_ID","MEDPAR_ID","DSCHRG_DT","DSCHRG_DSTNTN_CD","ADMSN_DT")] 
+
+outptODs_subset <- outptOD_allODs[,c("BENE_ID","CLM_ID","CLM_FROM_DT","PTNT_DSCHRG_STUS_CD","CLM_THRU_DT")]
+
+# Rename columns, add indicator for location, and merge
+
+setnames(medparODs_subset, 
+         old = c("MEDPAR_ID","DSCHRG_DT","ADMSN_DT"), 
+         new = c("CLM_ID","IP_DSCHRG_DT","IP_ADMSN_DT")) 
+
+medparODs_subset$outpt1 <- rep(0,nrow(medparODs_subset))
+
+setnames(outptODs_subset, 
+         old = c("CLM_FROM_DT","CLM_THRU_DT","PTNT_DSCHRG_STUS_CD"), 
+         new = c("OP_CLM_FROM_DT","OP_CLM_THRU_DT","DSCHRG_DSTNTN_CD")) 
+
+outptODs_subset$outpt1 <- rep(1,nrow(outptODs_subset))
+
+allODdts_allbenes_complete <- merge(medparODs_subset, outptODs_subset, all.x=TRUE, all.y=TRUE)
+
+```
+
+### Collapse to 1 record per OD
+
+Single overdoses may result in more than one medpar or outpatient claim (or a medpar and outpatient claim) when benes are transferred to facilities. In this analysis, I made the following decisions:
+
+1 - Records with the same inpatient admission dates: select latest discharge date
+2 - Records with the same inpatient discharge: select earliest admission
+3 - Records with the same outpt claim from dates: select latest discharge date
+4 - Records with the same outpt claim thru dates: select either
+5 - Benes who transferred from outpt to inpatient: select inpatient
+
+The complete OD files for medpar and outpatient will have each event included, but the 'all OD dates' file will only have the unique events. This is so I can later capture all the diagnosis codes between facilities. 
+
+```{r Simplify to 1 record per OD}
+
+# Look at benes who have discharge date from outpatient the same as inpatient admission date & designate as one OD 
+
+# Check for benes who transferred from outpatient to outpatient facility 
+
+# Would have the same outpt claim from OR same outpt claim thru date
+
+outpt_clm_from <- outptOD_allODs %>% 
+  group_by(BENE_ID, CLM_FROM_DT) %>%
+  filter(n() > 1) 
+
+outpt_thru_dt <- outptOD_allODs %>% 
+  group_by(BENE_ID, CLM_THRU_DT) %>%
+  filter(n() > 1)
+
+# Check for benes who transferred from inpt to inpt 
+
+medpar_adm_dt <- medparOD_allODs %>% 
+  group_by(BENE_ID,ADMSN_DT) %>% 
+  filter(n() > 1) 
+
+medpar_dschrg_dt <- medparOD_allODs %>% 
+  group_by(BENE_ID, DSCHRG_DT) %>%
+  filter(n() > 1)
+
+# All benes who have OD records in both inpatient and outpatient files (captures transfers and those who have separate events in inpt/outpt settings)
+
+allODdts_allbenes_complete$dupe_medpar_adm <- ifelse(allODdts_allbenes_complete$CLM_ID %in% medpar_adm_dt$MEDPAR_ID, 1, 0)
+allODdts_allbenes_complete$dupe_medpar_dschrg  <- ifelse(allODdts_allbenes_complete$CLM_ID %in% medpar_dschrg_dt$MEDPAR_ID, 1, 0)
+
+allODdts_allbenes_complete$dupe_outpt_clmfrom <- ifelse(allODdts_allbenes_complete$CLM_ID %in% outpt_clm_from$CLM_ID, 1, 0)
+allODdts_allbenes_complete$dupe_outpt_clmthru <- ifelse(allODdts_allbenes_complete$CLM_ID %in% outpt_thru_dt$CLM_ID, 1, 0)
+
+allODdts_allbenes_complete$outpt_to_inpt <- coalesce(allODdts_allbenes_complete$OP_CLM_THRU_DT, allODdts_allbenes_complete$IP_ADMSN_DT)
+
+# Records with the same inpatient admission dates (select latest discharge date)
+
+df3 <- subset(allODdts_allbenes_complete, dupe_medpar_adm == 1)
+df4 <- df3 %>%
+  group_by(BENE_ID, IP_ADMSN_DT) %>%
+  filter(n()>1) %>%
+  slice(which.max(IP_DSCHRG_DT)) 
+df_delete1 <- df3 %>%
+  filter(CLM_ID %notin% df4$CLM_ID) 
+
+allODdts_allbenes_complete <- allODdts_allbenes_complete %>%
+  filter(CLM_ID %notin% df_delete1$CLM_ID)
+
+# Records with the same inpatient discharge (select earliest admission)
+
+df5 <- subset(allODdts_allbenes_complete, dupe_medpar_dschrg == 1) # There are 3 benes with na for discharge dates. I am removing them - no way of accounting for history after discharge
+df6 <- df5 %>% 
+  group_by(BENE_ID, IP_DSCHRG_DT) %>%
+  filter(n()>1) %>%
+  filter(DSCHRG_DSTNTN_CD == 65 | DSCHRG_DSTNTN_CD == 6) %>%
+  slice(which.min(IP_ADMSN_DT)) 
+df_delete2 <- df5 %>%
+  filter(CLM_ID %notin% df6$CLM_ID) 
+
+allODdts_allbenes_complete <- allODdts_allbenes_complete %>%
+  filter(CLM_ID %notin% df_delete2$CLM_ID & DSCHRG_DSTNTN_CD != 30)
+  
+# Records with the same outpt claim from dates (select latest discharge date)
+
+df7 <- subset(allODdts_allbenes_complete, dupe_outpt_clmfrom == 1) # 1025 benes, 2224 clms, same dxs per event, slice  to 1 
+df8 <- df7 %>% 
+  group_by(BENE_ID, OP_CLM_FROM_DT) %>%
+  filter(n()>1) %>%
+  slice(which.max(OP_CLM_THRU_DT))
+df_delete3 <- df7 %>%
+  filter(CLM_ID %notin% df8$CLM_ID) 
+
+allODdts_allbenes_complete <- allODdts_allbenes_complete %>%
+  filter(CLM_ID %notin% df_delete3$CLM_ID)
+
+# Records with the same outpt claim thru dates (select either)
+
+df9 <- subset(allODdts_allbenes_complete, dupe_outpt_clmthru == 1)
+df10 <- df9 %>%
+  group_by(BENE_ID, OP_CLM_FROM_DT) %>%
+  filter(n()>1) %>%
+  slice(1) 
+df_delete4 <- df9 %>%
+  filter(CLM_ID %notin% df10$CLM_ID) 
+
+allODdts_allbenes_complete <- allODdts_allbenes_complete %>%
+  filter(CLM_ID %notin% df_delete4$CLM_ID)
+
+
+######
+
+# Check for benes who transferred from outpt to inpt
+
+df11 <- allODdts_allbenes_complete %>% 
+  group_by(BENE_ID, outpt_to_inpt) %>%
+  filter(n() > 1)
+
+n_distinct(df11$outpt_to_inpt)
+
+df12 <- df11 %>%
+  group_by(BENE_ID,outpt_to_inpt) %>%
+  filter(outpt1 == 1)
+
+n_distinct(df12$outpt_to_inpt)
+
+allODdts_allbenes_complete <- allODdts_allbenes_complete %>%
+  filter(CLM_ID %notin% df12$CLM_ID)
+
+allODdts_allbenes_complete$INDEX_DT <- coalesce(allODdts_allbenes_complete$IP_DSCHRG_DT, allODdts_allbenes_complete$OP_CLM_THRU_DT)
+
+paste0("A total of ",n_distinct(allODdts_allbenes_complete$BENE_ID)," beneficiaries had at least one inpatient or outpatient OD claim between 2011-2017.")
+
+saveRDS(allODdts_allbenes_complete, file = "allODdts_allbenes_complete.Rds")
+
+```
+
+
+```{r 2014-2016 medpar & outpt all ODs}
+
+allODdts_allbenes_study.years <- subset(allODdts_allbenes_complete, INDEX_DT >= "2014-01-01" & INDEX_DT <= "2016-12-31")
+
+paste0("A total of ",n_distinct(allODdts_allbenes_study.years$BENE_ID)," beneficiaries had at least one inpatient or outpatient OD claim between 2014-2016.")
+
+```
+
+### Prepare for dual coverage analysis
+
+Next, I am going to determine eligibility based on dual status 6-months prior to the index date and 12-months following (or until death). 
+
+```{r Subset OD dfs by year}
+
+# subset to columns that will be used to determine dual status
+
+allODdts_allbenes_study.years_subset <- allODdts_allbenes_study.years[,c("BENE_ID","CLM_ID","INDEX_DT")]
+
+# 2014 ODs ####
+
+ODs_2014 <- subset(allODdts_allbenes_study.years_subset, INDEX_DT < "2015-01-01")
+
+paste0("In 2014, ",n_distinct(ODs_2014$BENE_ID)," beneficiaries were discharged after an OD in an inpatient or outpatient event.")
+
+# 2015 ODs ####
+
+ODs_2015 <- subset(allODdts_allbenes_study.years_subset, INDEX_DT >= "2015-01-01" & INDEX_DT < "2016-01-01")
+
+
+paste0("In 2015, ",n_distinct(ODs_2015$BENE_ID)," beneficiaries were discharged after an OD in an inpatient or outpatient event.")
+
+# 2016 ODs ####
+
+ODs_2016 <- subset(allODdts_allbenes_study.years_subset, INDEX_DT >= "2016-01-01" & INDEX_DT < "2017-01-01")
+
+paste0("In 2016, ",n_distinct(ODs_2016$BENE_ID)," beneficiaries were discharged after an OD in an inpatient or outpatient event.")
+
+```
+
+# FULL DUALS
+
+1) By year-MBSF
+
+Benes needed full dual status/no HMO for 6 months prior to OD and 12 months following (or until death) so surrounding years are also included
+
+2014 MBSF ODs 
+
+```{r combine 2014 ODs-dual status & HMO}
+
+##### Filter mbsfs for dual and HMO status of 2014 ODs #
+
+mbsf2013_ODpop14 <- filter(mbsf_base2013, BENE_ID %in% ODs_2014$BENE_ID)
+mbsf2014_ODpop14 <- filter(mbsf_base2014, BENE_ID %in% ODs_2014$BENE_ID)
+mbsf2015_ODpop14 <- filter(mbsf_base2015, BENE_ID %in% ODs_2014$BENE_ID)
+
+# full dual indicator columns
+
+# colnames(mbsf2013_ODpop14)
+
+mbsf2013_ODpop14 <- mbsf2013_ODpop14 %>%
+  mutate(across(c(163:174), ~ ifelse(.x ==2 | .x ==4| .x ==8,1,0), .names = "{col}_2013")) 
+
+mbsf2014_ODpop14 <- mbsf2014_ODpop14 %>%
+  mutate(across(c(163:174), ~ ifelse(.x ==2 | .x ==4| .x ==8,1,0), .names = "{col}_2014")) 
+
+mbsf2015_ODpop14 <- mbsf2015_ODpop14 %>%
+  mutate(across(c(163:174), ~ ifelse(.x ==2 | .x ==4| .x ==8,1,0), .names = "{col}_2015"))
+
+# HMO NOTE: Using 99 as my 'Yes' indicator so easy to distinguish when I determine eligibility later
+
+mbsf2013_ODpop14b <- mbsf2013_ODpop14 %>%
+  mutate(across(c(67:78), ~ ifelse(.x ==0,0,99), .names = "{col}_2013")) 
+
+mbsf2014_ODpop14b <- mbsf2014_ODpop14 %>%
+  mutate(across(c(67:78), ~ ifelse(.x ==0,0,99), .names = "{col}_2014"))
+
+mbsf2015_ODpop14b <- mbsf2015_ODpop14 %>%
+  mutate(across(c(67:78), ~ ifelse(.x ==0,0,99), .names = "{col}_2015"))
+
+# Dual status dataframe
+
+benestatus_2013 <- mbsf2013_ODpop14b[,c(2,187:210)]
+benestatus_2014 <- mbsf2014_ODpop14b[,c(2,187:210)]
+benestatus_2015 <- mbsf2015_ODpop14b[,c(2,187:210)]
+
+# Merge all together
+
+# merge in two steps bc multiple dfs combining rows and columns 
+
+benestatus_13.14.15 <- merge(benestatus_2013,benestatus_2014, all.x = TRUE, all.y = TRUE) 
+mbsf_ODpop14 <- merge(benestatus_13.14.15,benestatus_2015,all.x = TRUE, all.y = TRUE)
+
+# n_distinct(mbsf_ODpop14$BENE_ID)
+
+```
+
+2015 MBSF ODs
+
+```{r combine 2015 ODs-dual status & HMO}
+
+# Filter mbsfs for 2015 ODs
+
+mbsf2014_ODpop15 <- filter(mbsf_base2014, BENE_ID %in% ODs_2015$BENE_ID)
+mbsf2015_ODpop15 <- filter(mbsf_base2015, BENE_ID %in% ODs_2015$BENE_ID)
+mbsf2016_ODpop15 <- filter(mbsf_base2016, BENE_ID %in% ODs_2015$BENE_ID)
+
+# full dual indicator columns
+
+mbsf2014_ODpop15 <- mbsf2014_ODpop15 %>%
+  mutate(across(c(163:174), ~ ifelse(.x ==2 | .x ==4| .x ==8,1,0), .names = "{col}_2014")) 
+
+mbsf2015_ODpop15 <- mbsf2015_ODpop15 %>%
+  mutate(across(c(163:174), ~ ifelse(.x ==2 | .x ==4| .x ==8,1,0), .names = "{col}_2015")) 
+
+mbsf2016_ODpop15 <- mbsf2016_ODpop15 %>%
+  mutate(across(c(163:174), ~ ifelse(.x ==2 | .x ==4| .x ==8,1,0), .names = "{col}_2016"))
+
+# HMO
+
+mbsf2014_ODpop15b <- mbsf2014_ODpop15 %>%
+  mutate(across(c(67:78), ~ ifelse(.x ==0,0,99), .names = "{col}_2014")) 
+
+mbsf2015_ODpop15b <- mbsf2015_ODpop15 %>%
+  mutate(across(c(67:78), ~ ifelse(.x ==0,0,99), .names = "{col}_2015"))
+
+mbsf2016_ODpop15b <- mbsf2016_ODpop15 %>%
+  mutate(across(c(67:78), ~ ifelse(.x ==0,0,99), .names = "{col}_2016"))
+
+# Dual status dataframe
+
+benestatus_2014 <- mbsf2014_ODpop15b[,c(2,187:210)]
+benestatus_2015 <- mbsf2015_ODpop15b[,c(2,187:210)]
+benestatus_2016 <- mbsf2016_ODpop15b[,c(2,187:210)]
+
+# Merge all together
+
+# merge in two steps bc multiple dfs 
+
+benestatus_14.15.16 <- merge(benestatus_2014,benestatus_2015, all.x = TRUE, all.y = TRUE) 
+mbsf_ODpop15 <- merge(benestatus_14.15.16,benestatus_2016,all.x = TRUE, all.y = TRUE)
+
+# n_distinct(mbsf_ODpop15$BENE_ID)
+
+```
+
+2016 MBSF ODs
+
+```{r 2016 combine ODs-dual status & HMO}
+
+# Filter mbsfs for 2016 ODs
+
+mbsf2015_ODpop16 <- filter(mbsf_base2015, BENE_ID %in% ODs_2016$BENE_ID)
+mbsf2016_ODpop16 <- filter(mbsf_base2016, BENE_ID %in% ODs_2016$BENE_ID)
+mbsf2017_ODpop16 <- filter(mbsf_base2017, BENE_ID %in% ODs_2016$BENE_ID)
+
+# full dual indicator columns
+
+mbsf2015_ODpop16 <- mbsf2015_ODpop16 %>%
+  mutate(across(c(163:174), ~ ifelse(.x ==2 | .x ==4| .x ==8,1,0), .names = "{col}_2015")) 
+
+mbsf2016_ODpop16 <- mbsf2016_ODpop16 %>%
+  mutate(across(c(163:174), ~ ifelse(.x ==2 | .x ==4| .x ==8,1,0), .names = "{col}_2016")) 
+
+mbsf2017_ODpop16 <- mbsf2017_ODpop16 %>%
+  mutate(across(c(163:174), ~ ifelse(.x ==2 | .x ==4| .x ==8,1,0), .names = "{col}_2017"))
+
+# HMO
+
+mbsf2015_ODpop16b <- mbsf2015_ODpop16 %>%
+  mutate(across(c(67:78), ~ ifelse(.x ==0,0,99), .names = "{col}_2015")) 
+
+mbsf2016_ODpop16b <- mbsf2016_ODpop16 %>%
+  mutate(across(c(67:78), ~ ifelse(.x ==0,0,99), .names = "{col}_2016"))
+
+mbsf2017_ODpop16b <- mbsf2017_ODpop16 %>%
+  mutate(across(c(67:78), ~ ifelse(.x ==0,0,99), .names = "{col}_2017"))
+
+# Dual status dataframe
+
+benestatus_2015 <- mbsf2015_ODpop16b[,c(2,187:210)]
+benestatus_2016 <- mbsf2016_ODpop16b[,c(2,187:210)]
+benestatus_2017 <- mbsf2017_ODpop16b[,c(2,187:210)]
+
+# Merge all together
+
+# merge in two steps bc multiple dfs 
+
+benestatus_15.16.17 <- merge(benestatus_2015,benestatus_2016, all.x = TRUE, all.y = TRUE) 
+mbsf_ODpop16 <- merge(benestatus_15.16.17,benestatus_2017,all.x = TRUE, all.y = TRUE)
+
+# n_distinct(mbsf_ODpop16$BENE_ID)
+
+```
+
+2) MBSF + OD df
+
+Combine to one df
+
+```{r one MBSF + OD df}
+
+mbsf_ODpop14$YEAR <- rep('2014',nrow(mbsf_ODpop14))
+mbsf_ODpop15$YEAR <- rep('2015',nrow(mbsf_ODpop15))
+mbsf_ODpop16$YEAR <- rep('2016',nrow(mbsf_ODpop16))
+
+# Merge each mbsf with the corresponding OD df (Bene ID, claim ID, index date + mbsf eligibility info)
+
+ODs_2014 <- data.frame(ODs_2014)
+mbsf_ODpop14 <- data.frame(mbsf_ODpop14)
+
+ODs_2015 <- data.frame(ODs_2015)
+mbsf_ODpop15 <- data.frame(mbsf_ODpop15)
+
+ODs_2016 <- data.frame(ODs_2016)
+mbsf_ODpop16 <- data.frame(mbsf_ODpop16)
+
+ODs_2014_full <- merge(ODs_2014, mbsf_ODpop14, all.x = TRUE, all.y = TRUE)
+ODs_2015_full <- merge(ODs_2015, mbsf_ODpop15, all.x = TRUE, all.y = TRUE)
+ODs_2016_full <- merge(ODs_2016, mbsf_ODpop16, all.x = TRUE, all.y = TRUE)
+
+# Merge OD dfs
+
+ODs_2014.2015 <- merge(ODs_2015_full, ODs_2014_full, all.x = TRUE, all.y = TRUE)
+ODs_2014thru2016 <- merge(ODs_2014.2015, ODs_2016_full, all.x = TRUE, all.y = TRUE)
+
+```
+
+### Add death data
+
+```{r Pull death data from 2014-2017 mbsfs}
+
+# Add death date
+
+mbsf_base2014$BENE_DEATH_DT <- as.Date(mbsf_base2014$BENE_DEATH_DT, "%d%b%Y")
+mbsf_base2015$BENE_DEATH_DT <- as.Date(mbsf_base2015$BENE_DEATH_DT, "%d%b%Y")
+mbsf_base2016$BENE_DEATH_DT <- as.Date(mbsf_base2016$BENE_DEATH_DT, "%d%b%Y")
+mbsf_base2017$BENE_DEATH_DT <- as.Date(mbsf_base2017$BENE_DEATH_DT, "%d%b%Y")
+
+deaths2014 <- subset(mbsf_base2014,BENE_DEATH_DT > "2013-01-01")
+deaths2015 <- subset(mbsf_base2015,BENE_DEATH_DT > "2013-01-01")
+deaths2016 <- subset(mbsf_base2016,BENE_DEATH_DT > "2013-01-01")
+deaths2017 <- subset(mbsf_base2017,BENE_DEATH_DT > "2013-01-01")
+
+deaths2014 <- deaths2014[,c('BENE_ID', 'BENE_DEATH_DT')]
+deaths2015 <- deaths2015[,c('BENE_ID', 'BENE_DEATH_DT')]
+deaths2016 <- deaths2016[,c('BENE_ID', 'BENE_DEATH_DT')]
+deaths2017 <- deaths2017[,c('BENE_ID', 'BENE_DEATH_DT')]
+
+deaths2014thru2017 <- rbind(deaths2014,deaths2015,deaths2016,deaths2017)
+
+# deaths2014thru2017 <- readRDS("deaths2014thru2017.Rds")
+
+ODs_2014thru2016 <- merge(ODs_2014thru2016,deaths2014thru2017, all.x = TRUE, all.y = FALSE)
+
+ODs_2014thru2016 <- transform(ODs_2014thru2016, BENE_DEATH_DT = as.yearmon(BENE_DEATH_DT))
+
+```
+
+Reorder columns and add death data
+
+```{r Reorder columns and add death data}
+
+# colnames(ODs_2014thru2016)
+
+ODs_2014thru2016 <- ODs_2014thru2016[,c("BENE_ID","YEAR","CLM_ID","INDEX_DT","BENE_DEATH_DT",
+                                    "DUAL_STUS_CD_01_2013",
+                                    "DUAL_STUS_CD_02_2013",
+                                    "DUAL_STUS_CD_03_2013",
+                                    "DUAL_STUS_CD_04_2013",
+                                    "DUAL_STUS_CD_05_2013",
+                                    "DUAL_STUS_CD_06_2013",
+                                    "DUAL_STUS_CD_07_2013",
+                                    "DUAL_STUS_CD_08_2013",
+                                    "DUAL_STUS_CD_09_2013",
+                                    "DUAL_STUS_CD_10_2013",
+                                    "DUAL_STUS_CD_11_2013",
+                                    "DUAL_STUS_CD_12_2013",
+                                    "DUAL_STUS_CD_01_2014",
+                                    "DUAL_STUS_CD_02_2014",
+                                    "DUAL_STUS_CD_03_2014",
+                                    "DUAL_STUS_CD_04_2014",
+                                    "DUAL_STUS_CD_05_2014",
+                                    "DUAL_STUS_CD_06_2014",
+                                    "DUAL_STUS_CD_07_2014",
+                                    "DUAL_STUS_CD_08_2014",
+                                    "DUAL_STUS_CD_09_2014",
+                                    "DUAL_STUS_CD_10_2014",
+                                    "DUAL_STUS_CD_11_2014",
+                                    "DUAL_STUS_CD_12_2014",
+                                    "DUAL_STUS_CD_01_2015",
+                                    "DUAL_STUS_CD_02_2015",
+                                    "DUAL_STUS_CD_03_2015",
+                                    "DUAL_STUS_CD_04_2015",
+                                    "DUAL_STUS_CD_05_2015",
+                                    "DUAL_STUS_CD_06_2015",
+                                    "DUAL_STUS_CD_07_2015",
+                                    "DUAL_STUS_CD_08_2015",
+                                    "DUAL_STUS_CD_09_2015",
+                                    "DUAL_STUS_CD_10_2015",
+                                    "DUAL_STUS_CD_11_2015",
+                                    "DUAL_STUS_CD_12_2015",
+                                    "DUAL_STUS_CD_01_2016",
+                                    "DUAL_STUS_CD_02_2016",
+                                    "DUAL_STUS_CD_03_2016",
+                                    "DUAL_STUS_CD_04_2016",
+                                    "DUAL_STUS_CD_05_2016",
+                                    "DUAL_STUS_CD_06_2016",
+                                    "DUAL_STUS_CD_07_2016",
+                                    "DUAL_STUS_CD_08_2016",
+                                    "DUAL_STUS_CD_09_2016",
+                                    "DUAL_STUS_CD_10_2016",
+                                    "DUAL_STUS_CD_11_2016",
+                                    "DUAL_STUS_CD_12_2016",
+                                    "DUAL_STUS_CD_01_2017",
+                                    "DUAL_STUS_CD_02_2017",
+                                    "DUAL_STUS_CD_03_2017",
+                                    "DUAL_STUS_CD_04_2017",
+                                    "DUAL_STUS_CD_05_2017",
+                                    "DUAL_STUS_CD_06_2017",
+                                    "DUAL_STUS_CD_07_2017",
+                                    "DUAL_STUS_CD_08_2017",
+                                    "DUAL_STUS_CD_09_2017",
+                                    "DUAL_STUS_CD_10_2017",
+                                    "DUAL_STUS_CD_11_2017",
+                                    "DUAL_STUS_CD_12_2017",
+                                    "HMO_IND_01_2013",
+                                    "HMO_IND_02_2013",
+                                    "HMO_IND_03_2013",
+                                    "HMO_IND_04_2013",
+                                    "HMO_IND_05_2013",
+                                    "HMO_IND_06_2013",
+                                    "HMO_IND_07_2013",
+                                    "HMO_IND_08_2013",
+                                    "HMO_IND_09_2013",
+                                    "HMO_IND_10_2013",
+                                    "HMO_IND_11_2013",
+                                    "HMO_IND_12_2013",
+                                    "HMO_IND_01_2014",
+                                    "HMO_IND_02_2014",
+                                    "HMO_IND_03_2014",
+                                    "HMO_IND_04_2014",
+                                    "HMO_IND_05_2014",
+                                    "HMO_IND_06_2014",
+                                    "HMO_IND_07_2014",
+                                    "HMO_IND_08_2014",
+                                    "HMO_IND_09_2014",
+                                    "HMO_IND_10_2014",
+                                    "HMO_IND_11_2014",
+                                    "HMO_IND_12_2014",
+                                    "HMO_IND_01_2015",
+                                    "HMO_IND_02_2015",
+                                    "HMO_IND_03_2015",
+                                    "HMO_IND_04_2015",
+                                    "HMO_IND_05_2015",
+                                    "HMO_IND_06_2015",
+                                    "HMO_IND_07_2015",
+                                    "HMO_IND_08_2015",
+                                    "HMO_IND_09_2015",
+                                    "HMO_IND_10_2015",
+                                    "HMO_IND_11_2015",
+                                    "HMO_IND_12_2015",
+                                    "HMO_IND_01_2016",
+                                    "HMO_IND_02_2016",
+                                    "HMO_IND_03_2016",
+                                    "HMO_IND_04_2016",
+                                    "HMO_IND_05_2016",
+                                    "HMO_IND_06_2016",
+                                    "HMO_IND_07_2016",
+                                    "HMO_IND_08_2016",
+                                    "HMO_IND_09_2016",
+                                    "HMO_IND_10_2016",
+                                    "HMO_IND_11_2016",
+                                    "HMO_IND_12_2016",
+                                    "HMO_IND_01_2017",
+                                    "HMO_IND_02_2017",
+                                    "HMO_IND_03_2017",
+                                    "HMO_IND_04_2017",
+                                    "HMO_IND_05_2017",
+                                    "HMO_IND_06_2017",
+                                    "HMO_IND_07_2017",
+                                    "HMO_IND_08_2017",
+                                    "HMO_IND_09_2017",
+                                    "HMO_IND_10_2017",
+                                    "HMO_IND_11_2017",
+                                    "HMO_IND_12_2017"
+                                    )]
+
+# colnames(ODs_2014thru2016)
+
+
+```
+
+Assigning benes who died full dual status & no HMO from their month of death to the end of study.  I am determining eligibility ultimately by summing eligibility within required months, so this will give benes who die and benes who live the same number of eligible months. This is 19 because they have 6 months prior, 12 months following, and during the month of the OD. Anyone who dies but did not fulfill the criteria before death will be excluded because the total number of eligible months will not be 19.
+
+```{r All deaths by month-year}
+
+# 2014 deaths ####
+
+Jan14 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Jan 2014") %>% 
+  mutate(across(c(18:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(78:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Feb14 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Feb 2014") %>% 
+  mutate(across(c(19:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(79:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+Mar14 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Mar 2014") %>% 
+  mutate(across(c(20:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(80:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+Apr14 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Apr 2014") %>% 
+  mutate(across(c(21:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(81:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+May14 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "May 2014") %>% 
+  mutate(across(c(22:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(82:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Jun14 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Jun 2014") %>% 
+  mutate(across(c(23:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(83:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Jul14 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Jul 2014") %>% 
+  mutate(across(c(24:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(84:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Aug14 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Aug 2014") %>% 
+  mutate(across(c(25:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(85:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Sep14 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Sep 2014") %>% 
+  mutate(across(c(26:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(86:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Oct14 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Oct 2014") %>% 
+  mutate(across(c(27:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(87:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Nov14 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Nov 2014") %>% 
+  mutate(across(c(28:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(88:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Dec14 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Dec 2014") %>% 
+  mutate(across(c(29:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(89:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+
+deaths2014_amongOD <- rbind(Jan14,Feb14,Mar14,Apr14,May14,Jun14,Jul14,Aug14,Sep14,Oct14,Nov14,Dec14)
+  
+
+# 2015 deaths ####
+
+Jan15 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Jan 2015") %>% 
+  mutate(across(c(30:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(90:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+Feb15 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Feb 2015") %>% 
+  mutate(across(c(31:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(91:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Mar15 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Mar 2015") %>% 
+  mutate(across(c(32:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(92:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Apr15 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Apr 2015") %>% 
+  mutate(across(c(33:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(93:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+May15 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "May 2015") %>% 
+  mutate(across(c(34:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(94:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Jun15 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Jun 2015") %>% 
+  mutate(across(c(35:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(95:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Jul15 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Jul 2015") %>% 
+  mutate(across(c(36:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(96:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+Aug15 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Aug 2015") %>% 
+  mutate(across(c(37:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(97:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+Sep15 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Sep 2015") %>% 
+  mutate(across(c(38:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(98:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Oct15 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Oct 2015") %>% 
+  mutate(across(c(39:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(99:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Nov15 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Nov 2015") %>% 
+  mutate(across(c(40:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(100:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Dec15 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Dec 2015") %>% 
+  mutate(across(c(41:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(101:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+
+deaths2015_amongOD <- rbind(Jan15,Feb15,Mar15,Apr15,May15,Jun15,Jul15,Aug15,Sep15,Oct15,Nov15,Dec15)
+
+# 2016 deaths ####
+
+Jan16 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Jan 2016") %>% 
+  mutate(across(c(42:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(102:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+Feb16 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Feb 2016") %>% 
+  mutate(across(c(43:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(103:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Mar16 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Mar 2016") %>% 
+  mutate(across(c(44:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(104:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Apr16 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Apr 2016") %>% 
+  mutate(across(c(45:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(105:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+May16 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "May 2016") %>% 
+  mutate(across(c(46:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(106:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+Jun16 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Jun 2016") %>% 
+  mutate(across(c(47:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(107:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Jul16 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Jul 2016") %>% 
+  mutate(across(c(48:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(108:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Aug16 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Aug 2016") %>% 
+  mutate(across(c(49:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(109:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+Sep16 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Sep 2016") %>% 
+  mutate(across(c(50:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(110:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+Oct16 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Oct 2016") %>% 
+  mutate(across(c(51:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(111:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Nov16 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Nov 2016") %>% 
+  mutate(across(c(52:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(112:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Dec16 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Dec 2016") %>% 
+  mutate(across(c(53:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(113:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+
+deaths2016_amongOD <- rbind(Jan16,Feb16,Mar16,Apr16,May16,Jun16,Jul16,Aug16,Sep16,Oct16,Nov16,Dec16)
+
+# 2017 deaths ####
+
+Jan17 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Jan 2017") %>% 
+  mutate(across(c(54:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(114:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+Feb17 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Feb 2017") %>% 
+  mutate(across(c(55:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(115:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+Mar17 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Mar 2017") %>% 
+  mutate(across(c(56:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(116:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Apr17 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Apr 2017") %>% 
+  mutate(across(c(57:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(117:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+May17 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "May 2017") %>% 
+  mutate(across(c(58:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(118:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+Jun17 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Jun 2017") %>% 
+  mutate(across(c(59:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(119:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+Jul17 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Jul 2017") %>% 
+  mutate(across(c(60:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(120:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+Aug17 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Aug 2017") %>% 
+  mutate(across(c(61:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(121:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+Sep17 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Sep 2017") %>% 
+  mutate(across(c(62:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(122:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Oct17 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Oct 2017") %>% 
+  mutate(across(c(63:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(123:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Nov17 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Nov 2017") %>% 
+  mutate(across(c(64:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(124:125), ~ ifelse(.x ==99 | is.na(.x),0,0)))
+Dec17 <- ODs_2014thru2016 %>% filter(BENE_DEATH_DT == "Dec 2017") %>% 
+  mutate(across(c(65:65), ~ ifelse(.x ==1 | .x ==0 | is.na(.x),1,1))) %>%
+  mutate(across(c(125:125), ~ ifelse(.x ==99 | is.na(.x),0,0))) 
+
+deaths2017_amongOD <- rbind(Jan17,Feb17,Mar17,Apr17,May17,Jun17,Jul17,Aug17,Sep17,Oct17,Nov17,Dec17)
+
+```
+
+Add death data to ODs_2014thru2016
+
+```{r Add death data to ODs_2014thru2016}
+
+# All ODdts & outcomes ####
+
+paste0("CHECK: The number of benes in the new dataframe (",n_distinct(ODs_2014thru2016$BENE_ID),") should be the same as the benes in the original df (", n_distinct(allODdts_allbenes_studycohort$BENE_ID),").")
+
+ODs_2014thru2016_died <- rbind(deaths2014_amongOD,deaths2015_amongOD,deaths2016_amongOD,deaths2017_amongOD)
+
+paste0(n_distinct(ODs_2014thru2016_died$BENE_ID), " benes in this cohort died by the end of 2017")
+
+ODs_2014thru2016_survived <- subset(ODs_2014thru2016, is.na(BENE_DEATH_DT))
+
+paste0(n_distinct(ODs_2014thru2016_survived$BENE_ID), " benes in this cohort survived at least until the end of 2017")
+
+ODs_2014thru2016 <- rbind(ODs_2014thru2016_died,ODs_2014thru2016_survived)
+
+# Reorganize df
+
+ODs_2014thru2016 <- ODs_2014thru2016[,c("BENE_ID","YEAR","CLM_ID","INDEX_DT",
+                                    "DUAL_STUS_CD_01_2013","HMO_IND_01_2013",
+                                    "DUAL_STUS_CD_02_2013","HMO_IND_02_2013",
+                                    "DUAL_STUS_CD_03_2013","HMO_IND_03_2013",
+                                    "DUAL_STUS_CD_04_2013","HMO_IND_04_2013",
+                                    "DUAL_STUS_CD_05_2013","HMO_IND_05_2013",
+                                    "DUAL_STUS_CD_06_2013","HMO_IND_06_2013",
+                                    "DUAL_STUS_CD_07_2013","HMO_IND_07_2013",
+                                    "DUAL_STUS_CD_08_2013","HMO_IND_08_2013",
+                                    "DUAL_STUS_CD_09_2013","HMO_IND_09_2013",
+                                    "DUAL_STUS_CD_10_2013","HMO_IND_10_2013",
+                                    "DUAL_STUS_CD_11_2013","HMO_IND_11_2013",
+                                    "DUAL_STUS_CD_12_2013","HMO_IND_12_2013",
+                                    "DUAL_STUS_CD_01_2014","HMO_IND_01_2014",
+                                    "DUAL_STUS_CD_02_2014","HMO_IND_02_2014",
+                                    "DUAL_STUS_CD_03_2014","HMO_IND_03_2014",
+                                    "DUAL_STUS_CD_04_2014","HMO_IND_04_2014",
+                                    "DUAL_STUS_CD_05_2014","HMO_IND_05_2014",
+                                    "DUAL_STUS_CD_06_2014","HMO_IND_06_2014",
+                                    "DUAL_STUS_CD_07_2014","HMO_IND_07_2014",
+                                    "DUAL_STUS_CD_08_2014","HMO_IND_08_2014",
+                                    "DUAL_STUS_CD_09_2014","HMO_IND_09_2014",
+                                    "DUAL_STUS_CD_10_2014","HMO_IND_10_2014",
+                                    "DUAL_STUS_CD_11_2014","HMO_IND_11_2014",
+                                    "DUAL_STUS_CD_12_2014","HMO_IND_12_2014",
+                                    "DUAL_STUS_CD_01_2015","HMO_IND_01_2015",
+                                    "DUAL_STUS_CD_02_2015","HMO_IND_02_2015",
+                                    "DUAL_STUS_CD_03_2015","HMO_IND_03_2015",
+                                    "DUAL_STUS_CD_04_2015","HMO_IND_04_2015",
+                                    "DUAL_STUS_CD_05_2015","HMO_IND_05_2015",
+                                    "DUAL_STUS_CD_06_2015","HMO_IND_06_2015",
+                                    "DUAL_STUS_CD_07_2015","HMO_IND_07_2015",
+                                    "DUAL_STUS_CD_08_2015","HMO_IND_08_2015",
+                                    "DUAL_STUS_CD_09_2015","HMO_IND_09_2015",
+                                    "DUAL_STUS_CD_10_2015","HMO_IND_10_2015",
+                                    "DUAL_STUS_CD_11_2015","HMO_IND_11_2015",
+                                    "DUAL_STUS_CD_12_2015","HMO_IND_12_2015",
+                                    "DUAL_STUS_CD_01_2016","HMO_IND_01_2016",
+                                    "DUAL_STUS_CD_02_2016","HMO_IND_02_2016",
+                                    "DUAL_STUS_CD_03_2016","HMO_IND_03_2016",
+                                    "DUAL_STUS_CD_04_2016","HMO_IND_04_2016",
+                                    "DUAL_STUS_CD_05_2016","HMO_IND_05_2016",
+                                    "DUAL_STUS_CD_06_2016","HMO_IND_06_2016",
+                                    "DUAL_STUS_CD_07_2016","HMO_IND_07_2016",
+                                    "DUAL_STUS_CD_08_2016","HMO_IND_08_2016",
+                                    "DUAL_STUS_CD_09_2016","HMO_IND_09_2016",
+                                    "DUAL_STUS_CD_10_2016","HMO_IND_10_2016",
+                                    "DUAL_STUS_CD_11_2016","HMO_IND_11_2016",
+                                    "DUAL_STUS_CD_12_2016","HMO_IND_12_2016",
+                                    "DUAL_STUS_CD_01_2017","HMO_IND_01_2017",
+                                    "DUAL_STUS_CD_02_2017","HMO_IND_02_2017",
+                                    "DUAL_STUS_CD_03_2017","HMO_IND_03_2017",
+                                    "DUAL_STUS_CD_04_2017","HMO_IND_04_2017",
+                                    "DUAL_STUS_CD_05_2017","HMO_IND_05_2017",
+                                    "DUAL_STUS_CD_06_2017","HMO_IND_06_2017",
+                                    "DUAL_STUS_CD_07_2017","HMO_IND_07_2017",
+                                    "DUAL_STUS_CD_08_2017","HMO_IND_08_2017",
+                                    "DUAL_STUS_CD_09_2017","HMO_IND_09_2017",
+                                    "DUAL_STUS_CD_10_2017","HMO_IND_10_2017",
+                                    "DUAL_STUS_CD_11_2017","HMO_IND_11_2017",
+                                    "DUAL_STUS_CD_12_2017","HMO_IND_12_2017",
+                                    "BENE_DEATH_DT")]
+
+```
+
+### Determine Eligibility 
+
+Note: based on full dual + no HMO from 6 months prior to OD/12 subsequent months (or until death)
+
+```{r Create eligibility indicator var by month-year}
+
+# First date of coverage needed
+
+ODs_2014thru2016$FIRST_DT <- ODs_2014thru2016$INDEX_DT - 180
+ODs_2014thru2016 <- ODs_2014thru2016 %>% relocate(FIRST_DT, .before = INDEX_DT)
+
+# End date - 12 months or until death - NOTE: Last date is 1 month prior to actual date because benes can have any status in the month of death. Benes sometimes coded 0, 99, or NA for dual status for the month they died so any of those codes are fine in addition to full dual codes for their death month. Spot checked and never found 1, 3, 6, or 9 (ineligible codes) for death month after all previous months were full duals.  (see above chunk of coding)
+
+ODs_2014thru2016$LAST_DT =  ODs_2014thru2016$INDEX_DT + 366
+ODs_2014thru2016 <- ODs_2014thru2016 %>% relocate(LAST_DT, .after = INDEX_DT)
+
+# Transform dates to month-year (easier to read and spot check)
+
+ODs_2014thru2016 <- transform(ODs_2014thru2016, FIRST_DT = as.yearmon(FIRST_DT))
+ODs_2014thru2016 <- transform(ODs_2014thru2016, LAST_DT = as.yearmon(LAST_DT))
+ODs_2014thru2016 <- transform(ODs_2014thru2016, INDEX_DT = as.yearmon(INDEX_DT))
+
+# Combine dual status columns & HMO columns to one 'eligible' indicator for each month. HMO==99 if "TRUE" for the month. I only am interested in those that == 1 (dual status = yes and HMO status = no)
+
+# IMPORTANT NOTE: Benes that die are indicated as full dual from the month of death until the end of the 12-month period regardless of prior dual status. (see above chunk)
+
+# colnames(ODs_2014thru2016)
+
+ODs_2014thru2016$ELIGIBLE_Jan2013 <- rowSums(ODs_2014thru2016[ , c(7,8)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Feb2013 <- rowSums(ODs_2014thru2016[ , c(9,10)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Mar2013 <- rowSums(ODs_2014thru2016[ , c(11,12)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Apr2013 <- rowSums(ODs_2014thru2016[ , c(13,14)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_May2013 <- rowSums(ODs_2014thru2016[ , c(15,16)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Jun2013 <- rowSums(ODs_2014thru2016[ , c(17,18)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Jul2013 <- rowSums(ODs_2014thru2016[ , c(19,20)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Aug2013 <- rowSums(ODs_2014thru2016[ , c(21,22)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Sep2013 <- rowSums(ODs_2014thru2016[ , c(23,24)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Oct2013 <- rowSums(ODs_2014thru2016[ , c(25,26)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Nov2013 <- rowSums(ODs_2014thru2016[ , c(27,28)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Dec2013 <- rowSums(ODs_2014thru2016[ , c(29,30)], na.rm=TRUE)
+
+ODs_2014thru2016$ELIGIBLE_Jan2014 <- rowSums(ODs_2014thru2016[ , c(31,32)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Feb2014 <- rowSums(ODs_2014thru2016[ , c(33,34)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Mar2014 <- rowSums(ODs_2014thru2016[ , c(35,36)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Apr2014 <- rowSums(ODs_2014thru2016[ , c(37,38)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_May2014 <- rowSums(ODs_2014thru2016[ , c(39,40)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Jun2014 <- rowSums(ODs_2014thru2016[ , c(41,42)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Jul2014 <- rowSums(ODs_2014thru2016[ , c(43,44)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Aug2014 <- rowSums(ODs_2014thru2016[ , c(45,46)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Sep2014 <- rowSums(ODs_2014thru2016[ , c(47,48)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Oct2014 <- rowSums(ODs_2014thru2016[ , c(49,50)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Nov2014 <- rowSums(ODs_2014thru2016[ , c(51,52)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Dec2014 <- rowSums(ODs_2014thru2016[ , c(53,54)], na.rm=TRUE)
+
+ODs_2014thru2016$ELIGIBLE_Jan2015 <- rowSums(ODs_2014thru2016[ , c(55,56)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Feb2015 <- rowSums(ODs_2014thru2016[ , c(57,58)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Mar2015 <- rowSums(ODs_2014thru2016[ , c(59,60)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Apr2015 <- rowSums(ODs_2014thru2016[ , c(61,62)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_May2015 <- rowSums(ODs_2014thru2016[ , c(63,64)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Jun2015 <- rowSums(ODs_2014thru2016[ , c(65,66)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Jul2015 <- rowSums(ODs_2014thru2016[ , c(67,68)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Aug2015 <- rowSums(ODs_2014thru2016[ , c(69,70)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Sep2015 <- rowSums(ODs_2014thru2016[ , c(71,72)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Oct2015 <- rowSums(ODs_2014thru2016[ , c(73,74)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Nov2015 <- rowSums(ODs_2014thru2016[ , c(75,76)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Dec2015 <- rowSums(ODs_2014thru2016[ , c(77,78)], na.rm=TRUE)
+
+ODs_2014thru2016$ELIGIBLE_Jan2016 <- rowSums(ODs_2014thru2016[ , c(79,80)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Feb2016 <- rowSums(ODs_2014thru2016[ , c(81,82)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Mar2016 <- rowSums(ODs_2014thru2016[ , c(83,84)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Apr2016 <- rowSums(ODs_2014thru2016[ , c(85,86)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_May2016 <- rowSums(ODs_2014thru2016[ , c(87,88)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Jun2016 <- rowSums(ODs_2014thru2016[ , c(89,90)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Jul2016 <- rowSums(ODs_2014thru2016[ , c(91,92)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Aug2016 <- rowSums(ODs_2014thru2016[ , c(93,94)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Sep2016 <- rowSums(ODs_2014thru2016[ , c(95,96)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Oct2016 <- rowSums(ODs_2014thru2016[ , c(97,98)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Nov2016 <- rowSums(ODs_2014thru2016[ , c(99,100)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Dec2016 <- rowSums(ODs_2014thru2016[ , c(101,102)], na.rm=TRUE)
+
+ODs_2014thru2016$ELIGIBLE_Jan2017 <- rowSums(ODs_2014thru2016[ , c(103,104)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Feb2017 <- rowSums(ODs_2014thru2016[ , c(105,106)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Mar2017 <- rowSums(ODs_2014thru2016[ , c(107,108)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Apr2017 <- rowSums(ODs_2014thru2016[ , c(109,110)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_May2017 <- rowSums(ODs_2014thru2016[ , c(111,112)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Jun2017 <- rowSums(ODs_2014thru2016[ , c(113,114)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Jul2017 <- rowSums(ODs_2014thru2016[ , c(115,116)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Aug2017 <- rowSums(ODs_2014thru2016[ , c(117,118)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Sep2017 <- rowSums(ODs_2014thru2016[ , c(119,120)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Oct2017 <- rowSums(ODs_2014thru2016[ , c(121,122)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Nov2017 <- rowSums(ODs_2014thru2016[ , c(123,124)], na.rm=TRUE)
+ODs_2014thru2016$ELIGIBLE_Dec2017 <- rowSums(ODs_2014thru2016[ , c(125,126)], na.rm=TRUE)
+
+# colnames(ODs_2014thru2016)
+
+ODs_2014thru2016 <- ODs_2014thru2016 %>% relocate(BENE_DEATH_DT, .after = LAST_DT)
+
+ODs_2014thru2016_abbrev <- ODs_2014thru2016[,c(1:7,128:187)]
+
+# colnames(ODs_2014thru2016_abbrev)
+
+n_distinct(ODs_2014thru2016_abbrev$BENE_ID) # Check to make sure no benes were cut
+
+
+```
+
+Eligibility of benes by year of OD
+
+```{r Determine eligibility by 2014 month-year}
+
+Jan2014ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Jan 2014") %>%
+    mutate(Total = select(., ELIGIBLE_Jul2013:ELIGIBLE_Jan2015) %>% 
+             rowSums(na.rm = TRUE))
+
+Feb2014ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Feb 2014") %>%
+    mutate(Total = select(., ELIGIBLE_Aug2013:ELIGIBLE_Feb2015) %>% 
+             rowSums(na.rm = TRUE))
+
+Mar2014ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Mar 2014") %>%
+    mutate(Total = select(., ELIGIBLE_Sep2013:ELIGIBLE_Mar2015) %>% 
+             rowSums(na.rm = TRUE))
+
+Apr2014ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Apr 2014") %>%
+    mutate(Total = select(., ELIGIBLE_Oct2013:ELIGIBLE_Apr2015) %>% 
+             rowSums(na.rm = TRUE))
+
+May2014ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "May 2014") %>%
+    mutate(Total = select(., ELIGIBLE_Nov2013:ELIGIBLE_May2015) %>% 
+             rowSums(na.rm = TRUE))
+
+Jun2014ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Jun 2014") %>%
+    mutate(Total = select(., ELIGIBLE_Dec2013:ELIGIBLE_Jun2015) %>% 
+             rowSums(na.rm = TRUE))
+
+Jul2014ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Jul 2014") %>%
+    mutate(Total = select(., ELIGIBLE_Jan2014:ELIGIBLE_Jul2015) %>% 
+             rowSums(na.rm = TRUE))
+
+Aug2014ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Aug 2014") %>%
+    mutate(Total = select(., ELIGIBLE_Feb2014:ELIGIBLE_Aug2015) %>% 
+             rowSums(na.rm = TRUE))
+
+Sep2014ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Sep 2014") %>%
+    mutate(Total = select(., ELIGIBLE_Mar2014:ELIGIBLE_Sep2015) %>% 
+             rowSums(na.rm = TRUE))
+
+Oct2014ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Oct 2014") %>%
+    mutate(Total = select(., ELIGIBLE_Apr2014:ELIGIBLE_Oct2015) %>% 
+             rowSums(na.rm = TRUE))
+
+Nov2014ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Nov 2014") %>%
+    mutate(Total = select(., ELIGIBLE_May2014:ELIGIBLE_Nov2015) %>% 
+             rowSums(na.rm = TRUE))
+
+Dec2014ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Dec 2014") %>%
+    mutate(Total = select(., ELIGIBLE_Jun2014:ELIGIBLE_Dec2015) %>% 
+             rowSums(na.rm = TRUE))
+
+ODs_eligible2014 <- rbind(Jan2014ODs_eligible,Feb2014ODs_eligible,Mar2014ODs_eligible,Apr2014ODs_eligible,May2014ODs_eligible,Jun2014ODs_eligible,Jul2014ODs_eligible,Aug2014ODs_eligible,Sep2014ODs_eligible,Oct2014ODs_eligible,Nov2014ODs_eligible,Dec2014ODs_eligible)
+
+
+
+```
+
+```{r Determine eligibility by 2015 month-year}
+
+Jan2015ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Jan 2015") %>%
+    mutate(Total = select(., ELIGIBLE_Jul2014:ELIGIBLE_Jan2016) %>% 
+             rowSums(na.rm = TRUE))
+Feb2015ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Feb 2015") %>%
+    mutate(Total = select(., ELIGIBLE_Aug2014:ELIGIBLE_Feb2016) %>% 
+             rowSums(na.rm = TRUE))
+Mar2015ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Mar 2015") %>%
+    mutate(Total = select(., ELIGIBLE_Sep2014:ELIGIBLE_Mar2016) %>% 
+             rowSums(na.rm = TRUE))
+Apr2015ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Apr 2015") %>%
+    mutate(Total = select(., ELIGIBLE_Oct2014:ELIGIBLE_Apr2016) %>% 
+             rowSums(na.rm = TRUE))
+May2015ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "May 2015") %>%
+    mutate(Total = select(., ELIGIBLE_Nov2014:ELIGIBLE_May2016) %>% 
+             rowSums(na.rm = TRUE))
+Jun2015ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Jun 2015") %>%
+    mutate(Total = select(., ELIGIBLE_Dec2014:ELIGIBLE_Jun2016) %>% 
+             rowSums(na.rm = TRUE))
+Jul2015ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Jul 2015") %>%
+    mutate(Total = select(., ELIGIBLE_Jan2015:ELIGIBLE_Jul2016) %>% 
+             rowSums(na.rm = TRUE))
+Aug2015ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Aug 2015") %>%
+    mutate(Total = select(., ELIGIBLE_Feb2015:ELIGIBLE_Aug2016) %>% 
+             rowSums(na.rm = TRUE))
+Sep2015ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Sep 2015") %>%
+    mutate(Total = select(., ELIGIBLE_Mar2015:ELIGIBLE_Sep2016) %>% 
+             rowSums(na.rm = TRUE))
+Oct2015ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Oct 2015") %>%
+    mutate(Total = select(., ELIGIBLE_Apr2015:ELIGIBLE_Oct2016) %>% 
+             rowSums(na.rm = TRUE))
+Nov2015ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Nov 2015") %>%
+    mutate(Total = select(., ELIGIBLE_May2015:ELIGIBLE_Nov2016) %>% 
+             rowSums(na.rm = TRUE))
+Dec2015ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Dec 2015") %>%
+    mutate(Total = select(., ELIGIBLE_Jun2015:ELIGIBLE_Dec2016) %>% 
+             rowSums(na.rm = TRUE))
+
+ODs_eligible2015 <- rbind(Jan2015ODs_eligible,Feb2015ODs_eligible,Mar2015ODs_eligible,Apr2015ODs_eligible,May2015ODs_eligible,Jun2015ODs_eligible,Jul2015ODs_eligible,Aug2015ODs_eligible,Sep2015ODs_eligible,Oct2015ODs_eligible,Nov2015ODs_eligible,Dec2015ODs_eligible)
+
+```
+
+```{r Determine eligibility by 2016 month-year}
+
+Jan2016ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Jan 2016") %>%
+    mutate(Total = select(., ELIGIBLE_Jul2015:ELIGIBLE_Jan2017) %>% 
+             rowSums(na.rm = TRUE))
+Feb2016ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Feb 2016") %>%
+    mutate(Total = select(., ELIGIBLE_Aug2015:ELIGIBLE_Feb2017) %>% 
+             rowSums(na.rm = TRUE))
+Mar2016ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Mar 2016") %>%
+    mutate(Total = select(., ELIGIBLE_Sep2015:ELIGIBLE_Mar2017) %>% 
+             rowSums(na.rm = TRUE))
+Apr2016ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Apr 2016") %>%
+    mutate(Total = select(., ELIGIBLE_Oct2015:ELIGIBLE_Apr2017) %>% 
+             rowSums(na.rm = TRUE))
+May2016ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "May 2016") %>%
+    mutate(Total = select(., ELIGIBLE_Nov2015:ELIGIBLE_May2017) %>% 
+             rowSums(na.rm = TRUE))
+Jun2016ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Jun 2016") %>%
+    mutate(Total = select(., ELIGIBLE_Dec2015:ELIGIBLE_Jun2017) %>% 
+             rowSums(na.rm = TRUE))
+Jul2016ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Jul 2016") %>%
+    mutate(Total = select(., ELIGIBLE_Jan2016:ELIGIBLE_Jul2017) %>% 
+             rowSums(na.rm = TRUE))
+Aug2016ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Aug 2016") %>%
+    mutate(Total = select(., ELIGIBLE_Feb2016:ELIGIBLE_Aug2017) %>% 
+             rowSums(na.rm = TRUE))
+Sep2016ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Sep 2016") %>%
+    mutate(Total = select(., ELIGIBLE_Mar2016:ELIGIBLE_Sep2017) %>% 
+             rowSums(na.rm = TRUE))
+Oct2016ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Oct 2016") %>%
+    mutate(Total = select(., ELIGIBLE_Apr2016:ELIGIBLE_Oct2017) %>% 
+             rowSums(na.rm = TRUE))
+Nov2016ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Nov 2016") %>%
+    mutate(Total = select(., ELIGIBLE_May2016:ELIGIBLE_Nov2017) %>% 
+             rowSums(na.rm = TRUE))
+Dec2016ODs_eligible <- ODs_2014thru2016_abbrev %>%
+  filter(INDEX_DT == "Dec 2016") %>%
+    mutate(Total = select(., ELIGIBLE_Jun2016:ELIGIBLE_Dec2017) %>% 
+             rowSums(na.rm = TRUE))
+
+ODs_eligible2016 <- rbind(Jan2016ODs_eligible,Feb2016ODs_eligible,Mar2016ODs_eligible,Apr2016ODs_eligible,May2016ODs_eligible,Jun2016ODs_eligible,Jul2016ODs_eligible,Aug2016ODs_eligible,Sep2016ODs_eligible,Oct2016ODs_eligible,Nov2016ODs_eligible,Dec2016ODs_eligible)
+
+```
+
+```{r One df for eligibility by all years}
+
+ODs_2014thru2016_abbrev <- rbind(ODs_eligible2014,ODs_eligible2015,ODs_eligible2016)
+
+n_distinct(ODs_2014thru2016_abbrev$BENE_ID)
+
+# table(ODs_2014thru2016_abbrev$Total)
+
+```
+
+### Eligible- Duals w no HMO
+
+```{r Final df of all eligible ODs}
+
+# Benes whose total = 19 are eligible for this study. They had 6 months coverage prior to OD, were eligible during the OD month, and had 12 months coverage after the event. Those who died before 12 months were designated as fully eligible for the months after their deaths.
+
+ODs_2014thru2016_eligible <- subset(ODs_2014thru2016_abbrev, Total == 19)
+
+# visually inspect/spot check whether criteria were fulfilled in full dual status + hmo df using original variables (DUAL_STUS_CD_01_2013, etc.)
+
+paste0("A total of ",n_distinct(ODs_2014thru2016_eligible$BENE_ID)," beneficiaries who fulfilled the full dual/no HMO eligibility requirement had ",n_distinct(ODs_2014thru2016_eligible$CLM_ID)," eligible claims  in an inpatient or outpatient facility between 2014-2016.")
+
+```
+
+# OTHER EXCLUSIONS
+
+```{r Divide eligible ODs by year}
+
+# First divide eligible claims for nedual ODs into the year of OD 
+
+ODs2014_neduals <- subset(ODs_2014thru2016_eligible, INDEX_DT >= "Jan 2014" & INDEX_DT < "Jan 2015") 
+n_distinct(ODs2014_neduals$BENE_ID) 
+ODs2015_neduals <- subset(ODs_2014thru2016_eligible, INDEX_DT >= "Jan 2015" & INDEX_DT < "Jan 2016")
+n_distinct(ODs2015_neduals$BENE_ID) 
+ODs2016_neduals <- subset(ODs_2014thru2016_eligible, INDEX_DT >= "Jan 2016" & INDEX_DT < "Jan 2017")
+n_distinct(ODs2016_neduals$BENE_ID) 
+
+```
+
+### MBSF exclusions
+
+```{r ESRD exclusion}
+
+esrd2014 <- mbsf2014_full %>% filter(BENE_ID %in% ODs2014_neduals$BENE_ID & ESRD_IND == 0)
+esrd2015 <- mbsf2015_full %>% filter(BENE_ID %in% ODs2015_neduals$BENE_ID & ESRD_IND == 0)
+esrd2016 <- mbsf2016_full %>% filter(BENE_ID %in% ODs2016_neduals$BENE_ID & ESRD_IND == 0)
+
+mbsf_esrd <- unique(c(esrd2014$BENE_ID,esrd2015$BENE_ID,esrd2016$BENE_ID))
+
+paste0("A total of ",n_distinct(unique(mbsf_esrd))," beneficiaries who fulfilled the dual/HMO criteria did not have ESRD at the time of the OD.")
+
+paste0(n_distinct(ODs_2014thru2016_eligible$BENE_ID)-n_distinct(unique(mbsf_esrd))," beneficiaries were eliminated because they had ESRD at the time of the OD.")
+
+```
+
+```{r Cancer dx exclusion}
+
+mbsf2014_cancer <- esrd2014 %>% filter(CANCER_BREAST != 3 & CANCER_LUNG != 3 & CANCER_COLORECTAL != 3 & CANCER_PROSTATE != 3 & CANCER_ENDOMETRIAL != 3 & LEUKLYMPH_MEDICARE != 3 & CANCER_BREAST != 1 & CANCER_LUNG != 1 & CANCER_COLORECTAL != 1 & CANCER_PROSTATE != 1 & CANCER_ENDOMETRIAL != 1 & LEUKLYMPH_MEDICARE != 1)
+
+mbsf2015_cancer <- esrd2015 %>% filter(CANCER_BREAST != 3 & CANCER_LUNG != 3 & CANCER_COLORECTAL != 3 & CANCER_PROSTATE != 3 & CANCER_ENDOMETRIAL != 3 & LEUKLYMPH_MEDICARE != 3 & CANCER_BREAST != 1 & CANCER_LUNG != 1 & CANCER_COLORECTAL != 1 & CANCER_PROSTATE != 1 & CANCER_ENDOMETRIAL != 1 & LEUKLYMPH_MEDICARE != 1)
+
+mbsf2016_cancer <- esrd2016 %>% filter(CANCER_BREAST != 3 & CANCER_LUNG != 3 & CANCER_COLORECTAL != 3 & CANCER_PROSTATE != 3 & CANCER_ENDOMETRIAL != 3 & LEUKLYMPH_MEDICARE != 3 & CANCER_BREAST != 1 & CANCER_LUNG != 1 & CANCER_COLORECTAL != 1 & CANCER_PROSTATE != 1 & CANCER_ENDOMETRIAL != 1 & LEUKLYMPH_MEDICARE != 1)
+
+mbsf_cancer <- unique(c(mbsf2014_cancer$BENE_ID,mbsf2015_cancer$BENE_ID,mbsf2016_cancer$BENE_ID))  
+
+paste0("A total of ",n_distinct(unique(mbsf_cancer))," beneficiaries who fulfilled the dual/HMO criteria/no ESRD also did not have one of the cancer dx in MBSF at the time of the OD.")
+
+paste0(n_distinct(unique(mbsf_esrd))-n_distinct(unique(mbsf_cancer))," beneficiaries were eliminated because they had cancer at the time of the OD.")
+
+```
+
+```{r Entitlement exclusion}
+
+entitlement2014 <- mbsf2014_cancer %>% filter(ENTLMT_RSN_ORIG == 1)
+entitlement2015 <- mbsf2015_cancer %>% filter(ENTLMT_RSN_ORIG == 1)
+entitlement2016 <- mbsf2016_cancer %>% filter(ENTLMT_RSN_ORIG == 1)
+
+mbsf_entitlement <- unique(c(entitlement2014$BENE_ID,entitlement2015$BENE_ID,entitlement2016$BENE_ID)) 
+
+paste0("A total of ",n_distinct(unique(mbsf_entitlement))," beneficiaries who fulfilled the dual/HMO criteria/no cancer in MBSF also were eligible for benefits due to a disability.")
+
+paste0(n_distinct(unique(mbsf_cancer))-n_distinct(unique(mbsf_entitlement))," beneficiaries were eliminated because they were not eligible for benefits based on a disability.")
+
+```
+
+```{r Location exclusion}
+
+# Location - 50 states and DC 
+
+mbsf2014_location <- entitlement2014 %>% filter(STATE_CODE != 40 & STATE_CODE != 48 & STATE_CODE < 54) 
+n_distinct(mbsf2014_location$BENE_ID) # 7596
+
+mbsf2015_location <- entitlement2015 %>% filter(STATE_CODE != 40 & STATE_CODE != 48 & STATE_CODE < 54)
+n_distinct(mbsf2015_location$BENE_ID) # 8648
+
+mbsf2016_location <- entitlement2016 %>% filter(STATE_CODE != 40 & STATE_CODE != 48 & STATE_CODE < 54)
+n_distinct(mbsf2016_location$BENE_ID) # 11655
+
+mbsf_location <- unique(c(mbsf2014_location$BENE_ID,mbsf2015_location$BENE_ID,mbsf2016_location$BENE_ID))  
+
+paste0("A total of ",n_distinct(unique(mbsf_location))," beneficiaries who fulfilled the dual/HMO criteria/no cancer/eligibility criteria lived in the 50 US states or DC at the time of the OD.")
+
+paste0(n_distinct(unique(mbsf_entitlement))-n_distinct(unique(mbsf_location))," beneficiaries were eliminated because they did not live in a US state or DC at the time of the OD.")
+
+```
+
+### First OD date
+
+```{r Benes with multiple OD claims-index event}
+
+# Filter the whole OD dataframe that contains all ODs from 2011-2017 for benes that satisfied the full dual criteria and fulfilled the other MBSF criteria in the year of the ODER 
+
+allODdts_allbenes_studycohort_2014 <- allODdts_allbenes_complete %>% filter(CLM_ID %in% ODs_2014thru2016_eligible$CLM_ID & BENE_ID %in% mbsf2014_location$BENE_ID & INDEX_DT > "2013-12-31")
+
+allODdts_allbenes_studycohort_2015 <- allODdts_allbenes_complete %>% filter(CLM_ID %in% ODs_2014thru2016_eligible$CLM_ID & BENE_ID %in% mbsf2015_location$BENE_ID & (INDEX_DT > "2014-12-31" & INDEX_DT < "2016-01-01"))
+
+allODdts_allbenes_studycohort_2016 <- allODdts_allbenes_complete %>% filter(CLM_ID %in% ODs_2014thru2016_eligible$CLM_ID & BENE_ID %in% mbsf2016_location$BENE_ID & (INDEX_DT > "2015-12-31" & INDEX_DT < "2017-01-01"))
+
+allODdts_studymbsfbenes <- rbind(allODdts_allbenes_studycohort_2014,allODdts_allbenes_studycohort_2015,allODdts_allbenes_studycohort_2016)
+
+# Identify first claims on index date during which the person fulfilled the mbsf criteria as well (date from which to calculate 12-month mortality)
+
+firstODdt_2014thru2016_all <- allODdts_studymbsfbenes %>%
+  group_by(BENE_ID) %>%
+  slice(which.min(INDEX_DT))
+
+```
+
+### Exclude benes who did not survive
+
+Exclude benes who did not survive the index OD. Also: I am excluding here the benes who died on date of discharge but did not have a claim with death noted.
+
+Finally, identifying the study cohort of benes who survived at least 1 day after discharge.  
+
+```{r Benes with who died-index event or same day}
+
+# Time to death ####
+
+firstODdt_2014thru2016_diedindex <- subset(firstODdt_2014thru2016_all,DSCHRG_DSTNTN_CD == 20)
+
+firstODdt_2014thru2016 <- firstODdt_2014thru2016_all %>% 
+  filter(DSCHRG_DSTNTN_CD !=20) # Exclude benes who died in the ER
+
+firstODdt_2014thru2016$BENE_DEATH_DT <- deaths2014thru2017$BENE_DEATH_DT[match(firstODdt_2014thru2016$BENE_ID,deaths2014thru2017$BENE_ID)]
+
+firstODdt_2014thru2016$BENE_DEATH_DT <- as.Date(firstODdt_2014thru2016$BENE_DEATH_DT,"%d%b%Y")
+
+firstODdt_2014thru2016$days2death <- difftime(firstODdt_2014thru2016$BENE_DEATH_DT,firstODdt_2014thru2016$INDEX_DT, units = "days")
+
+firstODdt_2014thru2016$days2death <- as.numeric(firstODdt_2014thru2016$days2death)
+
+summary(firstODdt_2014thru2016$days2death)
+
+# Inspect days2death that are less than 0. 
+
+days2death.lt0 <- filter(firstODdt_2014thru2016,days2death < 0)
+
+# Removing one bene with medpar ODER claim that has admission and discharge dates 111 days after death. He has no other OD claims (any location).
+
+firstODdt_2014thru2016_0 <- subset(firstODdt_2014thru2016, days2death >= 0 | is.na(firstODdt_2014thru2016$days2death))
+
+days2death.0 <- filter(firstODdt_2014thru2016_0,days2death == 0)
+
+paste0(n_distinct(firstODdt_2014thru2016_diedindex$BENE_ID)," beneficiaries were excluded because they died during the index event, ",n_distinct(days2death.lt0$BENE_ID)," beneficiary was excluded because the claim occurred 111 days after the death date and  ",n_distinct(days2death.0$BENE_ID)," beneficiaries were excluded because they died on the date of discharge from care.")
+
+# All who survived at least a day
+
+firstODdt_2014thru2016_gt0 <- subset(firstODdt_2014thru2016_0, days2death > 0| is.na(firstODdt_2014thru2016_0$days2death))
+
+paste0(n_distinct(firstODdt_2014thru2016_gt0$BENE_ID)," beneficiaries survived at least one day after discharge.")
+
+# Avg days to death
+
+summary(firstODdt_2014thru2016_gt0$days2death)
+
+paste0("The median number of days to death after OD is ",median(firstODdt_2014thru2016_gt0$days2death, na.rm = TRUE)," and the mean number of days to death is ",mean(firstODdt_2014thru2016_gt0$days2death, na.rm = TRUE),".")
+
+# 12-month mortality (dead12)
+
+firstODdt_2014thru2016_gt0$dead12 <- ifelse(firstODdt_2014thru2016_gt0$days2death < 366, 1, 0)
+  
+table(firstODdt_2014thru2016_gt0$dead12)
+
+firstODdt_2014thru2016_gt0$dead12[is.na(firstODdt_2014thru2016_gt0$dead12)] <- 0
+
+firstODdt_2014thru2016 <- firstODdt_2014thru2016_gt0 # final firstODdt file for study
+
+paste0("There are ",n_distinct(firstODdt_2014thru2016$BENE_ID)," beneficiaries in this study cohort.")
+
+firstODdt_2014thru2016$died_all <- ifelse(firstODdt_2014thru2016$days2death < 366, 1, 2)
+
+firstODdt_2014thru2016$died_all[is.na(firstODdt_2014thru2016$died_all)] <- 0
+
+# All OD dates for study cohort 
+
+allODdts_studymbsfbenes <- allODdts_allbenes_complete %>% filter(BENE_ID %in% firstODdt_2014thru2016$BENE_ID)
+
+# n_distinct(allODdts_studymbsfbenes$CLM_ID)
+
+
+saveRDS(firstODdt_2014thru2016,file="firstODdt_2014thru2016.Rds")
+saveRDS(allODdts_studymbsfbenes,file="allODdts_studymbsfbenes.Rds")
+
+
+```
+
+# MBSF-OD BENES
+
+```{r Full mbsf OD}
+
+# use first OD dt to identify mbsf record to use for the beneficiary
+
+firstODdt_2014 <- subset(firstODdt_2014thru2016, INDEX_DT > "2013-12-31" & INDEX_DT < "2015-01-01")
+mbsf_firstODdt_2014 <- subset(mbsf2014_location, BENE_ID %in% firstODdt_2014$BENE_ID)
+
+firstODdt_2015 <- subset(firstODdt_2014thru2016, INDEX_DT > "2014-12-31" & INDEX_DT < "2016-01-01")
+mbsf_firstODdt_2015 <- subset(mbsf2015_location, BENE_ID %in% firstODdt_2015$BENE_ID)
+
+firstODdt_2016 <- subset(firstODdt_2014thru2016, INDEX_DT > "2015-12-31" & INDEX_DT < "2017-01-01")
+mbsf_firstODdt_2016 <- subset(mbsf2016_location, BENE_ID %in% firstODdt_2016$BENE_ID)
+
+mbsfOD <- rbind(mbsf_firstODdt_2014,mbsf_firstODdt_2015,mbsf_firstODdt_2016)
+
+saveRDS(mbsfOD, file = "mbsfOD.Rds")
+
+```
+
+# FULL DUALS-NoOD
+
+Remove those in the OD dataframe and those who did not fulfill other study criteria
+
+### Exclusions
+
+```{r noOD pop exclusions}
+
+# ESRD
+
+esrd2014 <- mbsf2014_full %>% filter(BENE_ID %notin% mbsfOD$BENE_ID & ESRD_IND == 0)
+esrd2015 <- mbsf2015_full %>% filter(BENE_ID %notin% mbsfOD$BENE_ID & ESRD_IND == 0)
+esrd2016 <- mbsf2016_full %>% filter(BENE_ID %notin% mbsfOD$BENE_ID & ESRD_IND == 0)
+
+# Cancer
+
+mbsf2014_cancer <- esrd2014 %>% filter(CANCER_BREAST != 3 & CANCER_LUNG != 3 & CANCER_COLORECTAL != 3 & CANCER_PROSTATE != 3 & CANCER_ENDOMETRIAL != 3 & LEUKLYMPH_MEDICARE != 3 & CANCER_BREAST != 1 & CANCER_LUNG != 1 & CANCER_COLORECTAL != 1 & CANCER_PROSTATE != 1 & CANCER_ENDOMETRIAL != 1 & LEUKLYMPH_MEDICARE != 1)
+
+mbsf2015_cancer <- esrd2015 %>% filter(CANCER_BREAST != 3 & CANCER_LUNG != 3 & CANCER_COLORECTAL != 3 & CANCER_PROSTATE != 3 & CANCER_ENDOMETRIAL != 3 & LEUKLYMPH_MEDICARE != 3 & CANCER_BREAST != 1 & CANCER_LUNG != 1 & CANCER_COLORECTAL != 1 & CANCER_PROSTATE != 1 & CANCER_ENDOMETRIAL != 1 & LEUKLYMPH_MEDICARE != 1)
+
+mbsf2016_cancer <- esrd2016 %>% filter(CANCER_BREAST != 3 & CANCER_LUNG != 3 & CANCER_COLORECTAL != 3 & CANCER_PROSTATE != 3 & CANCER_ENDOMETRIAL != 3 & LEUKLYMPH_MEDICARE != 3 & CANCER_BREAST != 1 & CANCER_LUNG != 1 & CANCER_COLORECTAL != 1 & CANCER_PROSTATE != 1 & CANCER_ENDOMETRIAL != 1 & LEUKLYMPH_MEDICARE != 1)
+
+# Entitlement based on disability
+
+entitlement2014 <- mbsf2014_cancer %>% filter(ENTLMT_RSN_ORIG == 1)
+entitlement2015 <- mbsf2015_cancer %>% filter(ENTLMT_RSN_ORIG == 1)
+entitlement2016 <- mbsf2016_cancer %>% filter(ENTLMT_RSN_ORIG == 1)
+
+#  Location - 50 states and DC 
+
+mbsf2014_location <- entitlement2014 %>% filter(STATE_CODE != 40 & STATE_CODE != 48 & STATE_CODE < 54) 
+
+mbsf2015_location <- entitlement2015 %>% filter(STATE_CODE != 40 & STATE_CODE != 48 & STATE_CODE < 54)
+
+mbsf2016_location <- entitlement2016 %>% filter(STATE_CODE != 40 & STATE_CODE != 48 & STATE_CODE < 54)
+
+```
+
+### NoOD full duals-2015
+
+NE duals who did not OD and survived all year
+
+```{r noOD neduals alive all year 2015}
+
+mbsf2015_noOD_alive <- mbsf2015_location %>% filter(VALID_DEATH_DT_SW != 'V')
+
+allalive_2015 <- mbsf2015_noOD_alive %>% filter_at(vars(DUAL_STUS_CD_01:DUAL_STUS_CD_12), all_vars(!is.na(.)))
+allalive_2015 <- allalive_2015 %>% filter_at(vars(DUAL_STUS_CD_01:DUAL_STUS_CD_12), any_vars(. %in% c(2,4,8)))
+
+# Filter for each month
+
+allalive_2015 <- allalive_2015 %>% filter((DUAL_STUS_CD_01 == 2 | 
+                                             DUAL_STUS_CD_01 == 4 | 
+                                             DUAL_STUS_CD_01 == 8) & 
+                                            (DUAL_STUS_CD_02 == 2 | 
+                                               DUAL_STUS_CD_02 == 4 | 
+                                               DUAL_STUS_CD_02 == 8) &
+                                            (DUAL_STUS_CD_03 == 2 | 
+                                               DUAL_STUS_CD_03 == 4 | 
+                                               DUAL_STUS_CD_03 == 8) &
+                                            (DUAL_STUS_CD_04 == 2 | 
+                                               DUAL_STUS_CD_04 == 4 | 
+                                               DUAL_STUS_CD_04 == 8) &
+                                            (DUAL_STUS_CD_05 == 2 | 
+                                               DUAL_STUS_CD_05 == 4 | 
+                                               DUAL_STUS_CD_05 == 8) &
+                                            (DUAL_STUS_CD_06 == 2 | 
+                                               DUAL_STUS_CD_06 == 4 | 
+                                               DUAL_STUS_CD_06 == 8) &
+                                            (DUAL_STUS_CD_07 == 2 | 
+                                               DUAL_STUS_CD_07 == 4 | 
+                                               DUAL_STUS_CD_07 == 8) &
+                                            (DUAL_STUS_CD_08 == 2 | 
+                                               DUAL_STUS_CD_08 == 4 | 
+                                               DUAL_STUS_CD_08 == 8) &  
+                                            (DUAL_STUS_CD_09 == 2 | 
+                                               DUAL_STUS_CD_09 == 4 | 
+                                               DUAL_STUS_CD_09 == 8) &
+                                            (DUAL_STUS_CD_10 == 2 | 
+                                               DUAL_STUS_CD_10 == 4 | 
+                                               DUAL_STUS_CD_10 == 8) &
+                                            (DUAL_STUS_CD_11 == 2 | 
+                                               DUAL_STUS_CD_11 == 4 | 
+                                               DUAL_STUS_CD_11 == 8) &
+                                            (DUAL_STUS_CD_12 == 2 | 
+                                               DUAL_STUS_CD_12 == 4 | 
+                                               DUAL_STUS_CD_12 == 8))
+
+n_distinct(allalive_2015$BENE_ID)
+
+```
+
+2015 NE duals who did not OD and died in the calendar year
+
+```{r ne duals died 2015}
+
+mbsf2015_location$BENE_DEATH_DT <- as.Date(mbsf2015_location$BENE_DEATH_DT, "%d%b%Y")
+
+alldeaths_2015 <- mbsf2015_location %>% filter(VALID_DEATH_DT_SW == 'V')
+
+# JANUARY DEATHS
+
+# Remove anyone with dual status unknown in Jan 
+
+deaths1 <- filter(alldeaths_2015, between(BENE_DEATH_DT, as.Date("2015-01-01"), as.Date("2015-01-31")))
+# table(deaths1$DUAL_STUS_CD_01)
+deaths1 <- deaths1 %>% filter(DUAL_STUS_CD_01 == 2 | DUAL_STUS_CD_01 == 4 | DUAL_STUS_CD_01 == 8)
+
+# FEBRUARY DEATHS 
+
+deaths2 <- filter(alldeaths_2015, between(BENE_DEATH_DT, as.Date("2015-02-01"), as.Date("2015-02-28")))
+
+# Must have full dual status for previous month
+
+# table(deaths2$DUAL_STUS_CD_01)
+deaths2 <- deaths2 %>% filter(DUAL_STUS_CD_01 == 2 | DUAL_STUS_CD_01 == 4 | DUAL_STUS_CD_01 == 8)
+
+# Clean up current month's deaths
+
+# table(deaths2$DUAL_STUS_CD_02)
+
+# Remove 1, 3, 6, 9
+
+deaths2 <- deaths2 %>% filter(DUAL_STUS_CD_02 != 1 & DUAL_STUS_CD_02 != 3 & DUAL_STUS_CD_02 != 6 & DUAL_STUS_CD_02 != 9)
+# table(deaths2$DUAL_STUS_CD_02)
+
+# MARCH DEATHS
+
+deaths3 <- filter(alldeaths_2015, between(BENE_DEATH_DT, as.Date("2015-03-01"), as.Date("2015-03-31")))
+
+# Must have full dual status for previous months
+
+deaths3 <- deaths3 %>% filter_at(vars(DUAL_STUS_CD_01:DUAL_STUS_CD_02), all_vars(. %in% c(2, 4, 8)))
+
+# Clean up current month deaths
+
+# table(deaths3$DUAL_STUS_CD_03)
+deaths3 <- deaths3 %>% filter(DUAL_STUS_CD_03 != 1 & DUAL_STUS_CD_03 != 3 & DUAL_STUS_CD_03 != 6 & DUAL_STUS_CD_03 != 9)
+# table(deaths3$DUAL_STUS_CD_03)
+
+# APRIL DEATHS
+
+deaths4 <- filter(alldeaths_2015, between(BENE_DEATH_DT, as.Date("2015-04-01"), as.Date("2015-04-30")))
+
+# Must have full dual status for previous months
+
+deaths4 <- deaths4 %>% filter_at(vars(DUAL_STUS_CD_01:DUAL_STUS_CD_03), all_vars(. %in% c(2, 4, 8)))
+
+# Clean up current month's deaths
+
+# table(deaths4$DUAL_STUS_CD_04)
+deaths4 <- deaths4 %>% filter(DUAL_STUS_CD_04 != 1 & DUAL_STUS_CD_04 != 3 & DUAL_STUS_CD_04 != 6 & DUAL_STUS_CD_04 != 9)
+# table(deaths4$DUAL_STUS_CD_04)
+
+# MAY DEATHS
+
+deaths5 <- filter(alldeaths_2015, between(BENE_DEATH_DT, as.Date("2015-05-01"), as.Date("2015-05-31")))
+
+# Must have full dual status for previous months
+
+deaths5 <- deaths5 %>% filter_at(vars(DUAL_STUS_CD_01:DUAL_STUS_CD_04), all_vars(. %in% c(2, 4, 8)))
+
+# Clean up current month's deaths
+
+# table(deaths5$DUAL_STUS_CD_05)
+deaths5 <- deaths5 %>% filter(DUAL_STUS_CD_05 != 1 & DUAL_STUS_CD_05 != 3 & DUAL_STUS_CD_05 != 6 & DUAL_STUS_CD_05 != 9)
+# table(deaths5$DUAL_STUS_CD_05)
+
+# JUNE DEATHS
+
+deaths6 <- filter(alldeaths_2015, between(BENE_DEATH_DT, as.Date("2015-06-01"), as.Date("2015-06-30")))
+
+# Must have full dual status for previous months
+
+deaths6 <- deaths6 %>% filter_at(vars(DUAL_STUS_CD_01:DUAL_STUS_CD_05), all_vars(. %in% c(2, 4, 8)))
+
+# Clean up current month's deaths
+
+# table(deaths6$DUAL_STUS_CD_06)
+deaths6 <- deaths6 %>% filter(DUAL_STUS_CD_06 != 1 & DUAL_STUS_CD_06 != 3 & DUAL_STUS_CD_06 != 6 & DUAL_STUS_CD_06 != 9)
+# table(deaths6$DUAL_STUS_CD_06)
+
+# JULY DEATHS
+
+deaths7 <- filter(alldeaths_2015, between(BENE_DEATH_DT, as.Date("2015-07-01"), as.Date("2015-07-31")))
+
+# Must have full dual status for previous months
+
+deaths7 <- deaths7 %>% filter_at(vars(DUAL_STUS_CD_01:DUAL_STUS_CD_06), all_vars(. %in% c(2, 4, 8)))
+
+# Clean up current month's deaths
+
+# table(deaths7$DUAL_STUS_CD_07)
+deaths7 <- deaths7 %>% filter(DUAL_STUS_CD_07 != 1 & DUAL_STUS_CD_07 != 3 & DUAL_STUS_CD_07 != 6 & DUAL_STUS_CD_07 != 9)
+# table(deaths7$DUAL_STUS_CD_07)
+
+# AUGUST DEATHS
+
+deaths8 <- filter(alldeaths_2015, between(BENE_DEATH_DT, as.Date("2015-08-01"), as.Date("2015-08-31")))
+
+# Must have full dual status for previous months
+
+deaths8 <- deaths8 %>% filter_at(vars(DUAL_STUS_CD_01:DUAL_STUS_CD_07), all_vars(. %in% c(2, 4, 8)))
+
+# Clean up current month's deaths
+
+# table(deaths8$DUAL_STUS_CD_08)
+deaths8 <- deaths8 %>% filter(DUAL_STUS_CD_08 != 1 & DUAL_STUS_CD_08 != 3 & DUAL_STUS_CD_08 != 6 & DUAL_STUS_CD_08 != 9)
+# table(deaths8$DUAL_STUS_CD_08)
+
+# SEPT DEATHS
+
+deaths9 <- filter(alldeaths_2015, between(BENE_DEATH_DT, as.Date("2015-09-01"), as.Date("2015-09-30")))
+
+# Must have full dual status for previous months
+
+deaths9 <- deaths9 %>% filter_at(vars(DUAL_STUS_CD_01:DUAL_STUS_CD_08), all_vars(. %in% c(2, 4, 8)))
+
+# Clean up current month's deaths
+
+# table(deaths9$DUAL_STUS_CD_09)
+deaths9 <- deaths9 %>% filter(DUAL_STUS_CD_09 != 1 & DUAL_STUS_CD_09 != 3 & DUAL_STUS_CD_09 != 6 & DUAL_STUS_CD_09 != 9)
+# table(deaths9$DUAL_STUS_CD_09)
+
+# OCT DEATHS
+
+deaths10 <- filter(alldeaths_2015, between(BENE_DEATH_DT, as.Date("2015-10-01"), as.Date("2015-10-31")))
+
+# Must have full dual status for previous months
+
+deaths10 <- deaths10 %>% filter_at(vars(DUAL_STUS_CD_01:DUAL_STUS_CD_09), all_vars(. %in% c(2, 4, 8)))
+
+# Clean up current month's deaths
+# 
+# table(deaths10$DUAL_STUS_CD_10)
+deaths10 <- deaths10 %>% filter(DUAL_STUS_CD_10 != 1 & DUAL_STUS_CD_10 != 3 & DUAL_STUS_CD_10 != 6 & DUAL_STUS_CD_10 != 9)
+# table(deaths10$DUAL_STUS_CD_10)
+
+# NOV DEATHS
+
+deaths11 <- filter(alldeaths_2015, between(BENE_DEATH_DT, as.Date("2015-11-01"), as.Date("2015-11-30")))
+
+# Must have full dual status for previous months
+
+deaths11 <- deaths11 %>% filter_at(vars(DUAL_STUS_CD_01:DUAL_STUS_CD_10), all_vars(. %in% c(2, 4, 8)))
+
+# Clean up current month's deaths
+
+table(deaths11$DUAL_STUS_CD_11)
+deaths11 <- deaths11 %>% filter(DUAL_STUS_CD_11 != 1 & DUAL_STUS_CD_11 != 3 & DUAL_STUS_CD_11 != 6 & DUAL_STUS_CD_11 != 9)
+table(deaths11$DUAL_STUS_CD_11)
+
+# DEC DEATHS
+
+deaths12 <- filter(alldeaths_2015, between(BENE_DEATH_DT, as.Date("2015-12-01"), as.Date("2015-12-31")))
+
+# Must have full dual status for previous months
+
+deaths12 <- deaths12 %>% filter_at(vars(DUAL_STUS_CD_01:DUAL_STUS_CD_11),all_vars(. %in% c(2, 4, 8)))
+
+# Clean up current month's deaths
+
+# table(deaths12$DUAL_STUS_CD_12)
+deaths12 <- deaths12 %>% filter(DUAL_STUS_CD_12 != 1 & DUAL_STUS_CD_12 != 3 & DUAL_STUS_CD_12 != 6 & DUAL_STUS_CD_12 != 9)
+# table(deaths12$DUAL_STUS_CD_12)
+
+# All 2015 deaths
+
+alldeaths_2015 <- rbind(deaths1,
+                        deaths2,
+                        deaths3,
+                        deaths4,
+                        deaths5,
+                        deaths6,
+                        deaths7,
+                        deaths8,
+                        deaths9,
+                        deaths10,
+                        deaths11,
+                        deaths12)
+
+n_distinct(alldeaths_2015$BENE_ID)
+
+```
+
+# MBSF-NoOD BENES
+
+```{r final noOD mbsf}
+
+mbsf2015_noOD <- filter(mbsf2015_full, BENE_ID %in% allalive_2015$BENE_ID|BENE_ID %in% alldeaths_2015$BENE_ID)
+
+n_distinct(mbsf2015_noOD$BENE_ID)
+
+mbsf2015_noOD <- mbsf2015_noOD %>% filter(BENE_HMO_CVRAGE_TOT_MONS == 0)
+
+n_distinct(mbsf2015_noOD$BENE_ID)
+
+```
+
+
+
+
+```{r}
+
+# Add death date & format to date - whole df
+
+mbsfOD$BENE_DEATH_DT <- deaths2014thru2017$BENE_DEATH_DT[match(mbsfOD$BENE_ID,deaths2014thru2017$BENE_ID)]
+mbsf2015_noOD$BENE_DEATH_DT <- deaths2014thru2017$BENE_DEATH_DT[match(mbsf2015_noOD$BENE_ID,deaths2014thru2017$BENE_ID)]
+
+mbsfOD$BENE_DEATH_DT <- as.Date(mbsfOD$BENE_DEATH_DT,"%d%b%Y")
+mbsf2015_noOD$BENE_DEATH_DT <- as.Date(mbsf2015_noOD$BENE_DEATH_DT,"%d%b%Y")
+
+# OD and no OD pop to master dataframe
+
+mbsf_master <- rbind(mbsfOD, mbsf2015_noOD)
+
+```
+
+
+# SAVE MBSF DFs
+
+```{r}
+
+
+saveRDS(mbsfOD, file = "mbsfOD.Rds")
+saveRDS(mbsf2015_noOD, file = "mbsf2015_noOD.Rds")
+saveRDS(mbsf_master, file = "mbsf_master.Rds")
+
+
+```
+
+# FILTERED DFs
+
+Filtering the outpt and medpar dfs for all claims for OD benes for HCU later (completing now while they are open rather than reopening later) 
+
+Filtered files are saved within the chunks
+
+```{r Outpt HCU for OD pop}
+
+# firstODdt_2014thru2016 <- readRDS(file = "firstODdt_2014thru2016.Rds") 
+
+# Ouptpt
+
+outptHCU_ODpop_13 <- subset(outpatient2013_all, BENE_ID %in% firstODdt_2014thru2016$BENE_ID)
+outptHCU_ODpop_14 <- subset(outpatient2014_all, BENE_ID %in% firstODdt_2014thru2016$BENE_ID)
+outptHCU_ODpop_15 <- subset(outpatient2015_all, BENE_ID %in% firstODdt_2014thru2016$BENE_ID)
+outptHCU_ODpop_16 <- subset(outpatient2016_all, BENE_ID %in% firstODdt_2014thru2016$BENE_ID)
+outptHCU_ODpop_17 <- subset(outpatient2017_all, BENE_ID %in% firstODdt_2014thru2016$BENE_ID)
+
+# Remove V1 and inconsistent columns (not necessary for analysis)
+
+outptHCU_ODpop_13$V1 <- NULL
+outptHCU_ODpop_14$V1 <- NULL
+outptHCU_ODpop_15$V1 <- NULL
+outptHCU_ODpop_16$V1 <- NULL
+outptHCU_ODpop_17$V1 <- NULL
+
+outptHCU_ODpop_17$CLM_RSDL_PYMT_IND_CD <- NULL
+outptHCU_ODpop_17$PRVDR_VLDTN_TYPE_CD <- NULL
+outptHCU_ODpop_17$RR_BRD_EXCLSN_IND_SW <- NULL
+outptHCU_ODpop_17$CLM_MODEL_REIMBRSMT_AMT <- NULL
+
+outptHCU_ODpop <- rbind(outptHCU_ODpop_13,outptHCU_ODpop_14,outptHCU_ODpop_15,outptHCU_ODpop_16,outptHCU_ODpop_17)
+
+paste0("A total of ",n_distinct(outptHCU_ODpop$BENE_ID)," beneficiaries had outpatient records between 2013-2017.")
+
+saveRDS(outptHCU_ODpop, file = "outptHCU_ODpop.Rds")
+```
+
+
+```{r Medpar HCU OD pop}
+
+# Medpar
+
+medparHCU_ODpop_13 <- subset(medpar2013_all, BENE_ID %in% firstODdt_2014thru2016$BENE_ID)
+medparHCU_ODpop_14 <- subset(medpar2014_all, BENE_ID %in% firstODdt_2014thru2016$BENE_ID)
+medparHCU_ODpop_15 <- subset(medpar2015_all, BENE_ID %in% firstODdt_2014thru2016$BENE_ID)
+medparHCU_ODpop_16 <- subset(medpar2016_all, BENE_ID %in% firstODdt_2014thru2016$BENE_ID)
+medparHCU_ODpop_17 <- subset(medpar2017_all, BENE_ID %in% firstODdt_2014thru2016$BENE_ID)
+
+# Remove V1 and columns inconsistent between years (not necessary for analysis)
+
+medparHCU_ODpop_13$V1 <- NULL
+medparHCU_ODpop_14$V1 <- NULL
+medparHCU_ODpop_15$V1 <- NULL
+medparHCU_ODpop_16$V1 <- NULL
+medparHCU_ODpop_17$V1 <- NULL
+
+medparHCU_ODpop_16$ACO_ID_NUM <- NULL
+medparHCU_ODpop_17$ACO_ID_NUM <- NULL
+
+medparHCU_ODpop_16$RC_ALLOGENEIC_STEM_CELL_AMT <- NULL
+medparHCU_ODpop_17$RC_ALLOGENEIC_STEM_CELL_AMT <- NULL
+
+medparHCU_ODpop_16$ISLET_ADD_ON_PYMT_AMT <- NULL
+medparHCU_ODpop_17$ISLET_ADD_ON_PYMT_AMT <- NULL
+
+medparHCU_ODpop_17$CLM_IP_INITL_MS_DRG_CD <- NULL
+medparHCU_ODpop_17$VAL_CD_Q1_PYMT_RDCTN_AMT <- NULL
+
+medparHCU_ODpop <- rbind(medparHCU_ODpop_13,medparHCU_ODpop_14,medparHCU_ODpop_15,medparHCU_ODpop_16,medparHCU_ODpop_17)
+
+paste0("A total of ",n_distinct(medparHCU_ODpop$BENE_ID)," beneficiaries had inpatient records between 2013-2017.")
+
+saveRDS(medparHCU_ODpop, file = "medparHCU_ODpop.Rds")
+
+
+```
+
+
+# SAVE
+
+Files are saved within the above chunks as well as here
+
+```{r SAVE}
+
+saveRDS(mbsfOD, file="mbsfOD.Rds")
+saveRDS(mbsf2015_noOD, file="mbsf2015_noOD.Rds") 
+saveRDS(mbsf_master, file = "mbsf_master.Rds") # All benes with original vars only
+
+# All other dfs
+
+saveRDS(medparOD_allODs, file = "medparOD_allODs.Rds")
+saveRDS(outptOD_allODs, file = "outptOD_allODs.Rds")
+
+saveRDS(allODdts_allbenes_complete, file = "allODdts_allbenes_complete.Rds")
+
+saveRDS(allODdts_studymbsfbenes, file = "allODdts_studymbsfbenes.Rds")
+
+saveRDS(firstODdt_2014thru2016, file = "firstODdt_2014thru2016.Rds")
+
+saveRDS(deaths2014thru2017, file = "deaths2014thru2017.Rds")
+
+# knitr::purl("All OD data.Rmd")
+
+```
+
+```{r clean up}
+
+# 
+# CLEAN UP #################################################
+
+# Clear environment
+rm(list = ls())
+
+# Clear packages
+p_unload(all)  # Remove all add-ons
+
+# Clear console
+cat("\014")  # ctrl+L
+
+```
+
+
+
+
+
+
+
+
+
