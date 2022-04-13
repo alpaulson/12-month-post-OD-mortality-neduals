@@ -179,9 +179,6 @@ medparOD2015_all <- medpar2015_all %>%
 
 paste0("There were ",n_distinct(medparOD2015_all$BENE_ID)," inpatient ODs in 2015.")
 
-test <- subset(medparOD2015_all, DGNS_E_CD_CNT == 0) # 20% did not have E code
-
-
 ####### Outpatient #
 
 which(colnames(outpatient2015_all)=="ICD_DGNS_CD2") # column 43
@@ -211,8 +208,6 @@ medparOD2016_all <- medpar2016_all %>%
 
 paste0("There were ",n_distinct(medparOD2016_all$BENE_ID)," inpatient ODs in 2016.")
 
-test <- subset(medparOD2016_all, DGNS_E_CD_CNT == 0) # 40% did not have E code
-
 
 ####### Outpatient #
 
@@ -238,9 +233,6 @@ medparOD2017_all <- medpar2017_all %>%
   filter_at(vars(DGNS_1_CD:DGNS_2_CD), any_vars(. %in% c(medpar2017_icd10)))
 
 paste0("There were ",n_distinct(medparOD2017_all$BENE_ID)," inpatient ODs in 2017.")
-
-test <- subset(medparOD2017_all, DGNS_E_CD_CNT == 0) # % did not have E code
-
 
 ####### Outpatient #
 
